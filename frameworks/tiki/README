@@ -1,0 +1,15 @@
+=============================================================================
+Project:   Tiki
+Copyright: ©2009 Apple Inc.
+=============================================================================
+
+Tiki is a lightweight implementation of CommonJS for the web browser.  It 
+includes a simple module loader and package manager along with some of the 
+default modules defined in the CommonJS spec.
+
+The purpose of this project is to provide a very basic version of CommonJS 
+that can be used in a wide array of projects.
+
+Tiki is small and it can be safely loaded more than once so you can embed it 
+at the front of any JavaScript package that might require it.
+
