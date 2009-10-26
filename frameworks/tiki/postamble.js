@@ -14,4 +14,4 @@
 
 // note that the loader.setup method is safe so that calling this more than
 // once will only setup the default loader once.
-tiki = tiki.require('tiki', 'system/loader').setup(tiki);
+tiki = tiki.require('system/loader', 'tiki').setup(tiki, window);

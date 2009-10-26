@@ -72,7 +72,7 @@ Plan.prototype = {
       else logger.info("Beginning plan: %@".fmt(this));
     }
 
-    require('core_test', 'system/test').run(this, this.logger);
+    require('system/test').run(this, this.logger);
     
     if (logger) {
       if (logger.planDidBegin) logger.planDidEnd(this);

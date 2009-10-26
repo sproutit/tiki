@@ -4,7 +4,8 @@
 // ==========================================================================
 /*globals T_ERROR T_OBJECT T_NULL T_CLASS T_HASH T_FUNCTION T_NUMBER T_BOOL T_ARRAY T_UNDEFINED T_STRING YES NO isArray typeOf A generateGuid guidFor */
 
-"export T_ERROR T_OBJECT T_NULL T_CLASS T_HASH T_FUNCTION T_UNDEFINED T_NUMBER T_BOOL T_ARRAY T_STRING T_BOOLEAN YES NO isArray typeOf A generateGuid guidFor";
+"export T_ERROR T_OBJECT T_NULL T_CLASS T_HASH T_FUNCTION T_UNDEFINED T_NUMBER T_BOOL T_ARRAY T_STRING T_BOOLEAN";
+"export YES NO isArray typeOf A generateGuid guidFor mixin setupDisplayNames";
 
 // define standard type constants
 T_ERROR     = 'error';
@@ -161,4 +162,57 @@ guidFor = function guidFor(obj) {
     default:
       return generateGuid(obj);
   }
+};
+
+/**
+  Mixin the passed properties onto the first parameter.  This is a convenient
+  way to add properties to an object.
+  
+  @param {Hash} t the target object to mixin to
+  @param {Hash..} one or more hashes to mix in
+  @returns {Hash} the first parameter
+*/
+mixin = function mixin(t) {
+  
+  // copy reference to target object
+  var len    = arguments.length,
+      target = arguments[0] || {},
+      idx, options, key, src, copy;
+
+  for (idx=1; idx < len; idx++ ) {
+    if (!(options = arguments[idx])) continue ;
+    for(key in options) {
+      if (!options.hasOwnProperty(key)) continue ;
+
+      src  = target[key];
+      copy = options[key] ;
+      if (target===copy) continue ; // prevent never-ending loop
+      if (copy !== undefined) target[key] = copy ;
+    }
+  }
+  
+  return target;
+};
+
+var TMP_ARY = [];
+
+/**
+  Iterate over a property, setting display names on functions as needed. 
+*/
+setupDisplayNames = function setupDisplayNames(obj, root) {
+  var a = TMP_ARY;
+  a[0] = root;
+  
+  var k,v;
+  for(k in obj) {
+    if (!obj.hasOwnProperty(k)) continue ;
+    v = obj[k];
+    if ('function' === typeof v) {
+      a[1] = k;
+      v.displayName = a.join('.');
+    }
+  }
+  
+  a.length = 0;
+  return obj;
 };

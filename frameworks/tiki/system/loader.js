@@ -4,6 +4,7 @@
 // ==========================================================================
 /*globals Loader sandbox promise setup create */
 
+"import core as core";
 "import system/promise as promise";
 "import system/sandbox as sandbox";
 "export package Loader";
@@ -26,6 +27,19 @@ var SCRIPTS     = 'scripts',
     STYLESHEETS = 'stylesheets', 
     LOADS       = 'loads';
 
+
+// standard wrapper around a module.  replace item[1] with a string and join.
+var MODULE_WRAPPER = [
+  '(function(require, exports, module) {',
+  null,
+  '\n});\n//@ sourceURL=',
+  null,
+  ':',
+  null,
+  '\n'];
+
+var TMP_HASH = {} ;
+
 /**
   @class
   
@@ -34,13 +48,13 @@ var SCRIPTS     = 'scripts',
   You can optionally pass a pending queue of actions which will be replayed 
   on the loader immediate.
 */
-Loader = function(id, queue) {
+Loader = function Loader(id, queue, env) {
   this.id = id ;
   this.scripts = [];
   this.packages = []; 
   this.stylesheets = [];
   this.modules = {} ;
-  this.sandbox = sandbox.create(id, this);
+  this.sandbox = sandbox.create(id, this, env);
   this.register('default', {}); // always have a default package
   this.register('tiki', {}); // always local also
   
@@ -91,30 +105,44 @@ Loader.prototype = {
   modules: null,
   
   // ..........................................................
-  // PUBLIC METHODS
+  // STANDARD LOADER API
   // 
   
   /**
-    Takes a module name as well as a current module name and returns an 
-    absolute module identifier within the current package.  This is used when
-    looking up module names inside of a package.
-  */
-  resolve: function(moduleId, curModuleId) {
-    var path, len, idx, packageId, part;
+    Take a relative or fully qualified module name as well as an optional
+    base module Id name and returns a fully qualified module name.  If you 
+    pass a relative module name and no baseId, throws an exception.
     
-    if (moduleId.indexOf('.') >= 0) {
+    Any embedded package name will remain in-tact.
+    
+    @param {String} moduleId relative or fully qualified module id
+    @param {String} baseId fully qualified base id
+    @returns {String} fully qualified name
+  */
+  resolve: function resolve(moduleId, baseId) {
+    var path, len, idx, packageId, part, parts;
+
+    // must have some relative path components
+    if (moduleId.match(/(^\.\.?\/)|(\/\.\.?\/)|(\/\.\.?\/?$)/)) {
 
       // if we have a packageId embedded, get that first
       if ((idx=moduleId.indexOf(':'))>=0) {
         packageId = moduleId.slice(0,idx);
-        moduleId = moduleId.slice(idx+1);
-      }
-      
-      path = curModuleId ? curModuleId.split('/') : [];
-      moduleId = moduleId.split('/');
-      len = moduleId.length;
+        moduleId  = moduleId.slice(idx+1);
+        path      = []; // path must always be absolute.
+        
+      // if no package ID, then use baseId if first component is . or ..
+      } else if (moduleId.match(/^\.\.?\//)) {
+        if (!baseId) throw ("base required to resolve relative: " + moduleId);
+        path = baseId.split('/');
+        
+      } else path = [];
+
+      // iterate through path components and update path
+      parts = moduleId.split('/');
+      len   = parts.length;
       for(idx=0;idx<len;idx++) {
-        part = moduleId[idx];
+        part = parts[idx];
         if (part === '..') {
           if (path.length<1) throw "invalid path: " + moduleId.join('/');
           path.pop();
@@ -127,34 +155,112 @@ Loader.prototype = {
     }  
     return moduleId ;
   },
-  
-  /**
-    Takes a packageId (may be null) and a moduleId.  If the moduleId contains
-    a package name, it will replacing the calling packageId.  If you pass 
-    only one param, we assume it is a moduleId.
-    
-    @param {String} packageId the package id
-    @param {String} moduleId the module id
-    @param {Hash} hash optional hash to use for return.  
-    @returns {Hash} hash with packageId and moduleId params
-  */
-  canonical: function(packageId, moduleId, hash) {
-    if (arguments.length === 1) {
-      moduleId = packageId;
-      packageId = null;
-    }
-    if (!hash) hash = {};
 
-    var idx = moduleId.indexOf(':');
-    if (idx>=0) {
+  /**
+    Accepts a moduleId and optional baseId and packageId.  Returns a canonical
+    reference to a module that can be used to actually load the module.
+    
+    Optionally pass a hash that will be filled in to avoid allocing memory.
+    
+    @param {String} moduleId the module id
+    @param {String} baseId optional base id
+    @param {String} packageId optional package id
+    @param {Hash} hash optional source hash.  will be returned
+    @returns {Hash} canonical reference
+  */
+  canonical: function canonical(moduleId, baseId, packageId, hash) {
+    if (!hash) hash = {};
+    
+    if ((idx=moduleId.indexOf(':'))>=0) {
       packageId = moduleId.slice(0, idx);
       moduleId  = moduleId.slice(idx+1);
     }
+    if (!packageId) packageId = 'default';
     
+    hash.moduleId = moduleId;
     hash.packageId = packageId;
-    hash.moduleId  = moduleId;
     return hash;
   },
+  
+  /**
+    Takes module text, wraps it in a factory function and evaluates it to 
+    return a module factory.  This method does not cache the results so call
+    it sparingly.  
+    
+    @param {String} moduleText the raw module text to wrap
+    @param {String} moduleId the module id - used for debugging purposes
+    @param {String} packageId the id of the package loading
+    @returns {Function} factory function
+  */
+  evaluate: function evaluate(moduleText, moduleId, packageId) {
+    var ret;
+    
+    MODULE_WRAPPER[1] = moduleText;
+    MODULE_WRAPPER[3] = packageId || '(unknown package)';
+    MODULE_WRAPPER[5] = moduleId || '(unknown module)';
+    
+    ret = MODULE_WRAPPER.join('');
+    ret = eval(ret);
+    
+    MODULE_WRAPPER[1] = MODULE_WRAPPER[3] = MODULE_WRAPPER[5] = null;
+    return ret;
+  },
+  
+  /**
+    Discover and return the factory function for the named module and package.
+    You can also optionally pass a base module ID used to resolve the module.
+    If you do not explicitly name a package and the package id is not embedded
+    in the moduleId, then this method assumes you want the 'default' package.
+    
+    @param {String} moduleId the relative or absolute moduleId
+    @param {String} baseId optional base moduleId to resolve relative paths
+    @param {String} packageId optional package id (usually you pass this)
+    @returns {Function} the factory function for the module
+  */
+  load: function load(moduleId, baseId, packageId) {
+
+    var factories = this._factories, 
+        factory, idx, info;
+    
+    // normalize
+    info = this.canonical(moduleId, baseId, packageId, TMP_HASH);
+    moduleId = info.moduleId; packageId = info.packageId;
+
+    // default package is special.  If the module is not found there, then 
+    // look in the 'tiki' package.
+    if (packageId === 'default') {
+      factory = factories['default'];
+      if (factory) factory = factory[moduleId] ;
+      if (!factory) packageId = 'tiki';
+    }
+
+    // Verify that this packageId/moduleId is ready.  Then get the factory.
+    // evaling if needed.
+    if (!factory) {
+      
+      if (!this.ready(packageId, moduleId)) {
+        throw (packageId + ':' + moduleId + " is not ready");
+      }
+
+      // lookup the actual factory.  assume it's there since it passed ready()
+      factory = factories[packageId][moduleId];
+      
+      // if factory was registered as a string, then convert it to a function
+      // the first time.
+      if (factory && ('string' === typeof factory)) {
+        factory = this.evaluate(factory, moduleId, packageId);
+        factories[packageId][moduleId] = factory;
+      }
+    }
+
+    return factory;
+  },  
+  
+  // ..........................................................
+  // REGISTRATION CALLBACKS
+  // 
+  // These methods should be called on the loader by the scripts as they 
+  // load from the server.
   
   /**
     Registers a package with the loader.  The package descriptor should
@@ -168,7 +274,7 @@ Loader.prototype = {
     @param {Hash} desc a package descriptor
     @returns {Loader} receiver
   */
-  register: function(name, desc) {
+  register: function register(name, desc) {
     var catalog = this._catalog, key;
     if (!catalog) catalog = this._catalog = {};
     catalog[name] = desc;
@@ -200,7 +306,7 @@ Loader.prototype = {
     @param {String} url the script to load
     @returns {Loader} reciever
   */
-  script: function(url) {
+  script: function script(url) {
     if (!this._resolved(SCRIPTS, url)) this.scripts.push(url);
     this._promiseFor(SCRIPTS, url).resolve(url);        
     return this;
@@ -211,7 +317,7 @@ Loader.prototype = {
     first time this has been called, resolves a promise and adds the URL
     to the stylesheets array.
   */
-  stylesheet: function(url) {
+  stylesheet: function stylesheet(url) {
     if (!this._resolved(STYLESHEETS, url)) this.stylesheets.push(url);
     this._promiseFor(STYLESHEETS, url).resolve(url);        
     return this;
@@ -225,7 +331,7 @@ Loader.prototype = {
     @param {Function} factory factory function for module
     @returns {Loader} receiver
   */
-  module: function(pkgName, moduleName, factory) {
+  module: function module(pkgName, moduleName, factory) {
     var factories = this._factories, sub;
     if (!factories) factories = this._factories = {};
     sub = factories[pkgName];
@@ -241,6 +347,111 @@ Loader.prototype = {
     this._promiseFor(MODULES, pkgName, moduleName).resolve(moduleName);
   },
 
+  /**
+    Loads a package asynchronously.  Returns the package info or a promise
+    to return the package info when completed.  Use the promise module to
+    handle this promise.
+  */
+  async: function async(pkgName, fromPackageName) {
+    var ret = this._promiseFor(LOADS, pkgName);
+    
+    // if the promise is pending (meaning it hasn't been started yet),
+    // then either resolve it now or setup an action to load.
+    if (ret.status === promise.PENDING) {
+      if (this.ready(pkgName)) {
+        ret.resolve(); // already loaded - just resolve.
+
+      // not fully loaded yet.  Setup the promise action and run it.
+      } else {
+
+        var loader = this ;
+        
+        // this is the actual load action.  Before we can really "load"
+        // the package, the package needs to be registered in the catalog.
+        // Hence for this action we actually just want to listen for the
+        // catalog registration.  Once registered, then we load the 
+        // scripts and stylesheets as needed.
+        //
+        // Also if some info was already found in the catalog, we'll get
+        // scripts, stylesheets, and dependencies listed going there as 
+        // well.  These are not going to be formal dependencies however,
+        // until the actual package is registered.
+        ret.action(function(pr) {
+          
+          // wait for package to be registered.  Once registered, load 
+          // all of its contents and then resolve the load promise.
+          loader._promiseFor(CATALOG, pkgName).then(pr, function() {
+            loader._loadPackage(pkgName, pr);
+            pr.resolve();
+            
+          // handle cancelling...
+          }, function(reason) { pr.cancel(reason); });
+
+          // in case there is info already in the catalog, get it going.
+          // any of these items must load before the promise can resolve 
+          // as well.
+          loader._loadPackage(pkgName, pr);
+          
+        }).run();
+      }
+    }
+    
+    return ret;
+  },
+
+  /**
+    Requires a module.  This will instantiate a module in the default 
+    sandbox.
+  */
+  require: function require(packageName, moduleName) {
+    return this.sandbox.require(packageName, moduleName);
+  },
+  
+  /**
+    Return true if package or module is ready.
+    
+    @param {String} packageName package name
+    @param {String} moduleName optional module name
+    @returns {Boolean} true if ready
+  */
+  ready: function ready(packageName, moduleName) {
+    if (!this._resolved(CATALOG, packageName)) return false;
+    
+    var info = this._catalog[packageName], items, loc;
+    
+    // check dependencies
+    items = info.depends;
+    loc = items ? items.length : 0;
+    while (--loc>=0) {
+      if (!this.ready(items[loc])) return false ;
+    }
+    
+    // check stylesheets
+    items = info.stylesheets ;
+    loc = items ? items.length : 0;
+    while (--loc >= 0) {
+      if (!this._resolved(STYLESHEETS, items[loc])) return false ;
+    }
+    
+    // check scripts
+    items = info.scripts;
+    loc = items ? items.length : 0;
+    while(--loc >= 0) {
+      if (!this._resolved(SCRIPTS, items[loc])) return false ;
+    }
+    
+    // check module if provided...
+    if (moduleName) {
+      if (!this._resolved(MODULES, packageName, moduleName)) return false;
+    }
+    
+    return true ;
+  },
+  
+  // ..........................................................
+  // PRIVATE METHODS
+  // 
+  
   /** @private
   
     Gets a promise to load a script.  If the promise is still pending,
@@ -310,7 +521,7 @@ Loader.prototype = {
     items = info.depends;
     loc   = items ? items.length : 0;
     prDepends = promise.create();
-    while(--loc>=0) prDepends.depends(this.load(items[loc]));
+    while(--loc>=0) prDepends.depends(this.async(items[loc]));
     pr.depends(prDepends); // wait till resolved..
     prDepends.resolve();
     
@@ -355,137 +566,6 @@ Loader.prototype = {
     
     // all done...
   },
-  
-  /**
-    Loads a package asynchronously.  Returns the package info or a promise
-    to return the package info when completed.  Use the promise module to
-    handle this promise.
-  */
-  load: function(pkgName, fromPackageName) {
-    var ret = this._promiseFor(LOADS, pkgName);
-    
-    // if the promise is pending (meaning it hasn't been started yet),
-    // then either resolve it now or setup an action to load.
-    if (ret.status === promise.PENDING) {
-      if (this.ready(pkgName)) {
-        ret.resolve(); // already loaded - just resolve.
-
-      // not fully loaded yet.  Setup the promise action and run it.
-      } else {
-
-        var loader = this ;
-        
-        // this is the actual load action.  Before we can really "load"
-        // the package, the package needs to be registered in the catalog.
-        // Hence for this action we actually just want to listen for the
-        // catalog registration.  Once registered, then we load the 
-        // scripts and stylesheets as needed.
-        //
-        // Also if some info was already found in the catalog, we'll get
-        // scripts, stylesheets, and dependencies listed going there as 
-        // well.  These are not going to be formal dependencies however,
-        // until the actual package is registered.
-        ret.action(function(pr) {
-          
-          // wait for package to be registered.  Once registered, load 
-          // all of its contents and then resolve the load promise.
-          loader._promiseFor(CATALOG, pkgName).then(pr, function() {
-            loader._loadPackage(pkgName, pr);
-            pr.resolve();
-            
-          // handle cancelling...
-          }, function(reason) { pr.cancel(reason); });
-
-          // in case there is info already in the catalog, get it going.
-          // any of these items must load before the promise can resolve 
-          // as well.
-          loader._loadPackage(pkgName, pr);
-          
-        }).run();
-      }
-    }
-    
-    return ret;
-  },
-
-  /**
-    Requires a module.  This will instantiate a module in the default 
-    sandbox.
-  */
-  require: function(packageName, moduleName) {
-    return this.sandbox.require(packageName, moduleName);
-  },
-  
-  /**
-    Return true if package or module is ready.
-    
-    @param {String} packageName package name
-    @param {String} moduleName optional module name
-    @returns {Boolean} true if ready
-  */
-  ready: function(packageName, moduleName) {
-    if (!this._resolved(CATALOG, packageName)) return false;
-    
-    var info = this._catalog[packageName], items, loc;
-    
-    // check dependencies
-    items = info.depends;
-    loc = items ? items.length : 0;
-    while (--loc>=0) {
-      if (!this.ready(items[loc])) return false ;
-    }
-    
-    // check stylesheets
-    items = info.stylesheets ;
-    loc = items ? items.length : 0;
-    while (--loc >= 0) {
-      if (!this._resolved(STYLESHEETS, items[loc])) return false ;
-    }
-    
-    // check scripts
-    items = info.scripts;
-    loc = items ? items.length : 0;
-    while(--loc >= 0) {
-      if (!this._resolved(SCRIPTS, items[loc])) return false ;
-    }
-    
-    // check module if provided...
-    if (moduleName) {
-      if (!this._resolved(MODULES, packageName, moduleName)) return false;
-    }
-    
-    return true ;
-  },
-  
-  /**
-    Discover and run the factory function for the passed module.  Returns
-    the result.
-  */
-  factory: function(packageName, moduleName, require, exports, info) {
-    var factories = this._factories, factory;
-
-    // default package is special.  if you don't define it there, then
-    // look in the tiki package.
-    if (packageName === 'default') {
-      factory = factories['default'];
-      if (factory) factory = factory[moduleName] ;
-      if (!factory) packageName = 'tiki';
-    }
-    
-    if (!factory) {
-      if (!this.ready(packageName, moduleName)) {
-        throw (packageName + ':' + moduleName + " is not ready");
-      }
-      
-      factory = factories[packageName][moduleName];
-    }
-
-    return factory(require, exports, info);
-  },
-  
-  // ..........................................................
-  // PRIVATE METHODS
-  // 
   
   // eventually will provide a promise for the specified type/name. used
   // for dependency tracking
@@ -657,13 +737,16 @@ Loader.prototype = {
   
 };
 
+// make methods display useful names
+core.setupDisplayNames(Loader.prototype, 'Loader');
+
 // setup the default loader if needed.  pass in the current loader
-setup = function setup(curLoader) {
+setup = function setup(curLoader, env) {
   if (curLoader && !curLoader.isBootstrap) return curLoader;
   
   var queue = curLoader ? curLoader.queue : null,
       id    = curLoader ? curLoader.id : 'default',
-      ret   = new Loader(id, queue);
+      ret   = new Loader(id, queue, env);
       
   // once we are done with the old loader; tear it down to release memory
   if (curLoader && curLoader.destroy) curLoader.destroy();

@@ -4,6 +4,7 @@
 // ==========================================================================
 /*globals Promise create RESOLVED PENDING CANCELLED BUSY */
 
+"import core as core";
 "export package Promise";
 "export create RESOLVED PENDING CANCELLED BUSY";
 
@@ -320,6 +321,8 @@ Promise.prototype = {
     return 'Promise<id=' + this.id + ' status=' + this.status + '>';
   }    
 };
+
+core.setupDisplayNames(Promise.prototype, 'Promise');
 
 create = function create(id) { return new Promise(id); };
 

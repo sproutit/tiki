@@ -20,6 +20,15 @@ if ("undefined" === typeof tiki) { var tiki = function() {
   var factories = {} ; // temporary store of modules
   var modules = {};
   
+  var MODULE_WRAPPER = [
+    '(function(require, exports, module) {',
+    null,
+    '\n});\n//@ sourceURL=',
+    null,
+    ':',
+    null,
+    '\n'];
+  
   function _record(method, args) {
     queue.push({ m: method, a: args });
   }
@@ -57,11 +66,32 @@ if ("undefined" === typeof tiki) { var tiki = function() {
       _record('module', arguments);
       return this ;
     },
+
+    /**
+      Takes module text, wraps it in a factory function and evaluates it to 
+      return a module factory.  This method does not cache the results so call
+      it sparingly.  
+    */
+    evaluate: function(moduleText, moduleId, packageId) {
+      var ret;
+      
+      MODULE_WRAPPER[1] = moduleText;
+      MODULE_WRAPPER[3] = packageId || '(unknown package)';
+      MODULE_WRAPPER[5] = moduleId || '(unknown module)';
+      
+      ret = MODULE_WRAPPER.join('');
+      ret = eval(ret);
+       
+      MODULE_WRAPPER[1] = MODULE_WRAPPER[3] = MODULE_WRAPPER[5] = null;
+      
+      ret.displayName = (packageId + ':' + moduleId);
+      return ret;
+    },
     
     // require just instantiates the module if needed.  This allows registered
     // modules to be used during bootstrap
-    require: function(packageId, moduleId) {
-      var ret, m, info ;
+    require: function(moduleId, packageId) {
+      var ret, m, info, factory ;
       
       m = modules[packageId];
       if (!m) m = modules[packageId] = {};
@@ -70,7 +100,15 @@ if ("undefined" === typeof tiki) { var tiki = function() {
       if (!ret) {
         ret = m[moduleId] = {} ;
         info = { id: moduleId };
-        factories[packageId][moduleId](tiki.require, ret, info);
+        
+        // convert string into function as needed.
+        factory = factories[packageId][moduleId];
+        if ('string' === typeof factory) {
+          factory = tiki.evaluate(factory, moduleId, packageId);
+          factories[packageId][moduleId] = factory;
+        }
+        
+        factory.call(ret, tiki.require, ret, info);
       }
        
       return ret ;

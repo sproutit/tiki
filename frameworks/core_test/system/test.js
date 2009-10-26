@@ -51,7 +51,7 @@ run = function run(tests, logger, moduleName) {
   var prevLogger, key, value, inGroup = false;
   
   prevLogger = CoreTest.logger;
-  logger = CoreTest.logger = (logger || require('tiki', 'system/logger').console);
+  logger = CoreTest.logger = (logger || require('system/logger', 'default').console);
   
   for(key in tests) {
     if (!tests.hasOwnProperty(key)) continue;

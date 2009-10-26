@@ -1,6 +1,6 @@
 // ==========================================================================
 // Project:   Torch
-// Copyright: ©2009 My Company, Inc.
+// Copyright: ©2009 Apple Inc.
 // ==========================================================================
 /*globals plan module test ok equals notEquals deepEquals deepNotEquals */
 

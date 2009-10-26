@@ -41,7 +41,7 @@
   created a sandbox, you start running code by calling require().
 
 */
-Sandbox = function(id, loader, mainModuleId) {
+Sandbox = function Sandbox(id, loader, env) {
 
   var modules  = {}, // instantiated modules
       packages = {}, // names of packages & modules instantiated so far
@@ -55,21 +55,18 @@ Sandbox = function(id, loader, mainModuleId) {
     modules = {} ;
     packages = {} ;
   }
+  _clear.displayName = 'Sandbox.clear';
   
   // this is the core require method.  requires that you pass either a 
   // bundleId
-  function _require(packageId, moduleId, curPackageId, curModuleId) {
+  function _require(moduleId, packageId, curModuleId, curPackageId) {
     var require, info, pkg, exports, moduleInfo, factory;
 
     // normalize - if no packageId was passed, use curPackageId
-    if (moduleId === undefined) {
-      moduleId = packageId;
-      packageId = curPackageId;
-    }
+    if (packageId === undefined) packageId = curPackageId;
     
     // convert require to canonical reference to a packageId/moduleId
-    moduleId = loader.resolve(moduleId, curModuleId); // make absolute...
-    info = loader.canonical(packageId, moduleId, HASH);
+    info = loader.canonical(moduleId, curModuleId, packageId, HASH);
     packageId = info.packageId; moduleId = info.moduleId;
 
     // see if its already initialized
@@ -88,31 +85,36 @@ Sandbox = function(id, loader, mainModuleId) {
     
     // generate custom require with safe info exposed
     require = function(b, m) {
-      return _require(b, m, packageId, moduleId);
+      return _require(b, m, moduleId, packageId);
     };
+    require.displayName = 'Sandbox.require';
+    
     require.loader  = loader ;
-    require.main    = mainModuleId;
     require.clear   = _clear;
+    require.env     = env || {};
     
     // setup module info describing module state
     moduleInfo = { sandbox: sandbox, id: moduleId, packageId: packageId };
 
     // run module factory in loader
-    loader.factory(packageId, moduleId, require, exports, moduleInfo);
+    var func = loader.load(moduleId, null, packageId);
+    func.call(exports, require, exports, moduleInfo);
+
     return exports;
   }
 
   // require a module...
-  this.require = function(packageId, moduleId) {
-    return _require(packageId, moduleId);
+  this.require = function(moduleId, packageId) {
+    return _require(moduleId, packageId);
   };
+  this.require.displayName = 'Sandbox.require';
 
 };
 
 // safe methods
 Sandbox.prototype = {};
 
-create = function create(id, loader, main) {
-  return new Sandbox(id, loader, main);
+create = function create(id, loader, env) {
+  return new Sandbox(id, loader, env);
 };
 

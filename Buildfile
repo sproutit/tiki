@@ -1,6 +1,6 @@
 # ===========================================================================
 # Project:   Tiki
-# Copyright: ©2009 My Company, Inc.
+# Copyright: ©2009 Apple Inc.
 # ===========================================================================
 
 # Add initial buildfile information here
