@@ -3,18 +3,17 @@
 # Copyright: ©2009 Apple Inc.
 # ===========================================================================
 
-# Add initial buildfile information here
-config :all, 
-  :required => [:tiki, :core_test, :runtime], 
-  :use_modules => true,
-  :test_required  => [:core_test],
-  :debug_required => [],
-  :bootstrap_inline => 'tiki:bootstrap'
-   
-mode :debug do
-  config :all, :debug_required => []
+# Patch these guys for now...
+%w(bootstrap runtime datastore foundation desktop mobile).each do |k|
+  config "sproutcore/#{k}", :use_modules => false
 end
 
-config :tiki,      :required => []
-config :core_test, :required => [:tiki]
-config :runtime,   :required => [:tiki]
+config 'sproutcore/bootstrap', :use_loader => false
+
+# Configure Torch only - rest of frameworks should take care of themselves
+config :torch,
+  :required => %w(tiki tiki/platform/classic tiki/system),
+  :test_required => [:core_test],
+  :test_debug    => [],
+  :use_modules   => true,
+  :theme         => nil

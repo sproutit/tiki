@@ -2,11 +2,15 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals Promise create RESOLVED PENDING CANCELLED BUSY */
+/*globals Promise create RESOLVED PENDING CANCELLED BUSY BLOCKED core */
+
+// manually implement loader glue so we can place this into bootstrap code
 
 "import core as core";
 "export package Promise";
-"export create RESOLVED PENDING CANCELLED BUSY";
+"export create RESOLVED PENDING CANCELLED BUSY BLOCKED";
+
+"use factory_format function";
 
 /**
   @file
@@ -133,11 +137,19 @@ PENDING = 'pending';
 CANCELLED = 'cancelled' ;
 
 /**
-  Stauts of promise when it is busy running the action.
+  Status of promise when it is busy running the action.
   
   @property {String}
 */
 BUSY = 'busy';
+
+/**
+  Status of promise when it has been resolved but is still waiting on 
+  dependencies.
+  
+  @property {String}
+*/
+BLOCKED = 'blocked';
   
   
 /**
@@ -159,29 +171,30 @@ var Promise = function(id) {
 Promise.prototype = {
   
   /**
-    Promise status
+    Promise status.  Must be one of RESOLVE, PENDING, CANCELLED, BUSY
+    
+    @property {String}
   */
   status: PENDING,
   
-  _notify: function(key, value) {
-    var actions = this[key],
-        len = actions ? actions.length : 0, 
-        idx;
+  /**
+    Count of outstanding dependent promises.
+    
+    @property {Number}
+  */
+  outstandingDependencies: 0,
 
-    this[key] = null ; // clear them
-    for(idx=0;idx<len;idx++) {
-      actions[idx].method.call(actions[idx].target, value);
-    }
-  },
-
-  _register: function(key, target, method) {
-    if (method) {
-      var actions = this[key];
-      if (!actions) actions = this[key] = [];
-      actions.push({ target: target, method: method });        
-    }
-  },
-
+  /**
+    Becomes true when a promise has an action it can fire.
+    
+    @property {Boolean}
+  */
+  hasAction: false,
+  
+  // ..........................................................
+  // PUBLIC METHODS 
+  // 
+  
   /**
     Resolves the promise with the specified value.  If there are any 
     pending resolve actions, invokes them immediately.
@@ -190,94 +203,37 @@ Promise.prototype = {
     @returns {Promise} receiver
   */
   resolve: function(val) {
+    var st = this.status;
+    if ((st===RESOLVED) || (st===CANCELLED)) return this; // don't go again
+    
     this._value = val;
 
-    if (this.dependCount>0) {
-      this.canResolve = true;
+    if (this.outstandingDependencies>0) {
+      this.status = BLOCKED;
     } else {
       this.status = RESOLVED;
-      this._notify('_resolveActions', val);
+      this.value  = val;
+      this._notify(RESOLVED, val);
     }
     return this ;
   },
 
   /**
     Cancels the promise with the specified reason.  If there are any 
-    pending cancel actions, invokes them immediately.
+    pending cancel actions, invokes them immediately.  This ignores any 
+    dependencies.
+    
+    @param {Object} reason a reason for cancelation.  Will be passed to listeners.
+    @returns {Promise} receiver
   */
   cancel: function(reason) {
-    this.status = CANCELLED;
-    this._value = reason;
-    this._notify('_cancelActions', reason);
-    return this;
-  },
-
-  /**
-    Looks for an "action" function and invokes it unless the promise is
-    already resolved or cancelled
-  
-    @returns {Promise} receiver
-  */
-  run: function() {
-    if (this.method && this.status===PENDING) {
-      this.status = BUSY;
-      this.method(this);
-    }
-    return this ;
-  },
-
-  /**
-    If a promise has been resolved or cancelled, this will put it back to
-    ready.
-  
-    @returns {Promise} receiver
-  */
-  reset: function() {
-    if (this.status !== BUSY) this.status = PENDING;
-    this._value = null;
-    return this;
-  },
-
-  /**
-    configures the promise so you can run it.  This will only invoke your
-    callback once
-
-    @param {Function} method the method to invoke
-    @returns {Promise} receiver
-  */
-  action: function(method) {
-    if (!this.method) this.method = method ;
-    this.hasAction = true ;
-    return this ;
-  },
-
-  hasAction: false,
-  
-  dependCount: 0,
-
-  _resolveDepends: function() {
-    this.dependCount--;
-    if (this.dependCount<=0 && this.canResolve) this.resolve(this._value);
-    return this ;
-  },
-
-  _cancelDepends: function(reason) {
-    this.cancel(reason);
-    return this;
-  },
-
-  /**
-    Makes the receiver promise depend on the passed promise.  once you 
-    resolve a promise, it will not actually resolve until all dependents 
-    resolve as well.
+    var st = this.status;
+    if ((st===RESOLVED) || (st===CANCELLED)) return this; // nothing to do
     
-    @param {Promise} pr promise this promise is dependent upon
-    @returns {Promise} receiver
-  */
-  depends: function(pr) {
-    this.dependCount++;
-    pr.then(this, this._resolveDepends, this._cancelDepends);
-    return this ;
+    this.status = CANCELLED;
+    this.value = reason;
+    this._notify(CANCELLED, reason);
+    return this;
   },
 
   /**
@@ -293,33 +249,175 @@ Promise.prototype = {
   then: function(target, resolveMethod, cancelMethod) {
     var actions;
     
-    // normalize arguments
+    // normalize arguments - allow you to pass w/o an up front target
     if (arguments.length<3 && ('function' === typeof target)) {
       cancelMethod = resolveMethod;
       resolveMethod = target;
       target = this;
     }
     
-    switch(this.status) {
-      case RESOLVED:
-        if (resolveMethod) resolveMethod.call(target, this._value, this);
-        break;
+    if (resolveMethod) this._register(RESOLVED, target, resolveMethod);
+    if (cancelMethod) this._register(CANCELLED, target, cancelMethod);
 
-      case CANCELLED: 
-        if (cancelMethod) cancelMethod.call(target, this._value, this);
-        break;
+    return this ;
+  },
 
-      default:
-        this._register('_resolveActions', target, resolveMethod);
-        this._register('_cancelActions', target, cancelMethod);
+
+  /**
+    Looks for an "action" function and invokes it unless the promise is
+    already resolved or cancelled
+  
+    @returns {Promise} receiver
+  */
+  run: function() {
+    if (this.method && this.status===PENDING) {
+      this.status = BUSY;
+      this.method.call(this.target||this, this);
     }
     return this ;
+  },
+
+  /**
+    If a promise has been resolved or cancelled, this will put it back to
+    ready.
+  
+    @returns {Promise} receiver
+  */
+  reset: function() {
+    var st = this.status;
+    if ((st !== BUSY) || (st !== BLOCKED)) this.status = PENDING;
+    this.value = null;
+    return this;
+  },
+
+  /**
+    configures the promise so you can run it.  This will only invoke your
+    callback once
+
+    @param {Function} method the method to invoke
+    @returns {Promise} receiver
+  */
+  action: function(target, method) {
+
+    // normalize input methods
+    if (arguments.length===1) {
+      method = target; target = this;
+    }
+
+    this.target    = target;
+    this.method    = method;
+    this.hasAction = true ;
+    return this ;
+  },
+
+  /**
+    Makes the receiver promise depend on the passed promise.  once you 
+    resolve a promise, it will not actually resolve until all dependents 
+    resolve as well.
+    
+    @param {Promise} pr promise this promise is dependent upon
+    @returns {Promise} receiver
+  */
+  depends: function(pr) {
+    this.outstandingDependencies++;
+    pr.then(this, this._resolveDepends, this._cancelDepends);
+    return this ;
+  },
+
+  // ..........................................................
+  // PRIVATE METHODS
+  // 
+
+  /** @private
+    Called by a dependent promise when it resolves.  Reduce the dependency
+    count and, if needed, resolve this promise.
+    
+    @returns {Promise} receiver
+  */
+  _resolveDepends: function() {
+    this.outstandingDependencies--;
+    if (this.outstandingDependencies<=0 && (this.status===BLOCKED)) {
+      this.resolve(this.value);
+    } 
+    
+    return this ;
+  },
+
+  /**
+    Called by a dependent promise when the promise is cancelled.  Implicitly
+    cancels this promise as well.
+    
+    @returns {Promise} receiver
+  */
+  _cancelDepends: function(reason) {
+    this.cancel(reason);
+    return this;
+  },
+
+  /** @private
+    Notify actions of a state change.  This will delete all registered 
+    actions in the queue, even for other states.
+    
+    @param {String} state the state to notify
+    @param {Object} arg an optional argument to pass
+    @return {void}
+  */
+  _notify: function(status, arg) {
+    var act = this._actions, len, i;
+    act = act ? act[status] : null;
+    len = act ? act.length : 0;
+
+    this._actions = null; // clear queue
+    for(i=0;i<len;i++) this._invoke(act[i].target, act[i].method, arg);
+  },
+
+  /** @private
+    Invokes the passed target/method with the named argument.  Will convert
+    the method if it is a string.
+    
+    @param {Object} target target to invoke
+    @param {Function|String} method the method to invoke
+    @param {Object} arg optional argument
+    @returns {void}
+  */
+  _invoke: function(target, method, arg) {
+    if (('string' === typeof method) && target) method = target[method];
+    if (!target) target = this;
+    method.call(target, arg);
+  },
+  
+  /** 
+    @private
+    
+    Registers the passed target/method against the named state.  If the 
+    promise is already resolved or cancelled, then invoke immediately.
+    
+    @param {String} status the state to register
+    @param {Object} target a target for the callback
+    @param {String|Function} method the function to invoke
+    @returns {void}
+  */
+  _register: function(status, target, method) {
+    var cur = this.status, actions, f;
+    
+    if ((cur===RESOLVED)||(cur===CANCELLED)) {
+      if (cur === status) this._invoke(target, method, this.value);
+      // else ignore.
+      
+    // not resolved or cancelled; register in queue
+    } else {
+      actions = this._actions;
+      if (!actions) actions = this._actions = {};
+      f = actions[status];
+      if (!f) f = actions[status] = [];
+      f.push({ target: target, method: method });
+    }
   },
 
   /** @private */
   toString: function() {
     return 'Promise<id=' + this.id + ' status=' + this.status + '>';
-  }    
+  }   
 };
 
 core.setupDisplayNames(Promise.prototype, 'Promise');

@@ -5,10 +5,13 @@
 /*globals Loader sandbox promise setup create */
 
 "import core as core";
-"import system/promise as promise";
-"import system/sandbox as sandbox";
+"import lib/promise as promise";
+"import lib/sandbox as sandbox";
+
 "export package Loader";
 "export create setup";
+
+"use factory_format function";
 
 /**
   @file
@@ -34,11 +37,11 @@ var MODULE_WRAPPER = [
   null,
   '\n});\n//@ sourceURL=',
   null,
-  ':',
-  null,
   '\n'];
 
-var TMP_HASH = {} ;
+var TIKI_ARY = ['tiki/', null];
+
+var STRING = 'string';
 
 /**
   @class
@@ -53,7 +56,7 @@ Loader = function Loader(id, queue, env) {
   this.scripts = [];
   this.packages = []; 
   this.stylesheets = [];
-  this.modules = {} ;
+  this.modules = [] ;
   this.sandbox = sandbox.create(id, this, env);
   this.register('default', {}); // always have a default package
   this.register('tiki', {}); // always local also
@@ -134,6 +137,10 @@ Loader.prototype = {
       // if no package ID, then use baseId if first component is . or ..
       } else if (moduleId.match(/^\.\.?\//)) {
         if (!baseId) throw ("base required to resolve relative: " + moduleId);
+        
+        idx = baseId.indexOf(':');
+        packageId = baseId.slice(0,idx);
+        baseId = baseId.slice(idx+1);
         path = baseId.split('/');
         
       } else path = [];
@@ -160,26 +167,14 @@ Loader.prototype = {
     Accepts a moduleId and optional baseId and packageId.  Returns a canonical
     reference to a module that can be used to actually load the module.
     
-    Optionally pass a hash that will be filled in to avoid allocing memory.
+    Currently this is the same as calling resolve()
     
     @param {String} moduleId the module id
     @param {String} baseId optional base id
-    @param {String} packageId optional package id
-    @param {Hash} hash optional source hash.  will be returned
-    @returns {Hash} canonical reference
+    @returns {String} canonical reference
   */
-  canonical: function canonical(moduleId, baseId, packageId, hash) {
-    if (!hash) hash = {};
-    
-    if ((idx=moduleId.indexOf(':'))>=0) {
-      packageId = moduleId.slice(0, idx);
-      moduleId  = moduleId.slice(idx+1);
-    }
-    if (!packageId) packageId = 'default';
-    
-    hash.moduleId = moduleId;
-    hash.packageId = packageId;
-    return hash;
+  canonical: function canonical(moduleId, baseId) {
+    return this.resolve(moduleId, baseId);
   },
   
   /**
@@ -189,20 +184,18 @@ Loader.prototype = {
     
     @param {String} moduleText the raw module text to wrap
     @param {String} moduleId the module id - used for debugging purposes
-    @param {String} packageId the id of the package loading
     @returns {Function} factory function
   */
-  evaluate: function evaluate(moduleText, moduleId, packageId) {
+  evaluate: function evaluate(moduleText, moduleId) {
     var ret;
     
     MODULE_WRAPPER[1] = moduleText;
-    MODULE_WRAPPER[3] = packageId || '(unknown package)';
-    MODULE_WRAPPER[5] = moduleId || '(unknown module)';
+    MODULE_WRAPPER[3] = moduleId || '(unknown module)';
     
     ret = MODULE_WRAPPER.join('');
     ret = eval(ret);
     
-    MODULE_WRAPPER[1] = MODULE_WRAPPER[3] = MODULE_WRAPPER[5] = null;
+    MODULE_WRAPPER[1] = MODULE_WRAPPER[3] = null;
     return ret;
   },
   
@@ -214,43 +207,35 @@ Loader.prototype = {
     
     @param {String} moduleId the relative or absolute moduleId
     @param {String} baseId optional base moduleId to resolve relative paths
-    @param {String} packageId optional package id (usually you pass this)
     @returns {Function} the factory function for the module
   */
-  load: function load(moduleId, baseId, packageId) {
+  load: function load(moduleId, baseId) {
 
     var factories = this._factories, 
-        factory, idx, info;
+        factoriy, packagePart, factory, idx, info, tmp;
     
     // normalize
-    info = this.canonical(moduleId, baseId, packageId, TMP_HASH);
-    moduleId = info.moduleId; packageId = info.packageId;
+    moduleId    = this.canonical(moduleId, baseId);
 
-    // default package is special.  If the module is not found there, then 
-    // look in the 'tiki' package.
-    if (packageId === 'default') {
-      factory = factories['default'];
-      if (factory) factory = factory[moduleId] ;
-      if (!factory) packageId = 'tiki';
+    // if the named module is not registered, try with "tiki" in front
+    if (!factories[moduleId] && !moduleId.match(/^tiki\//)) {
+      TIKI_ARY[1] = moduleId;
+      tmp = TIKI_ARY.join('');
+      if (factories[tmp]) moduleId = tmp;
     }
 
     // Verify that this packageId/moduleId is ready.  Then get the factory.
     // evaling if needed.
-    if (!factory) {
-      
-      if (!this.ready(packageId, moduleId)) {
-        throw (packageId + ':' + moduleId + " is not ready");
-      }
+    if (!this.ready(moduleId)) throw(moduleId + " is not ready");
 
-      // lookup the actual factory.  assume it's there since it passed ready()
-      factory = factories[packageId][moduleId];
-      
-      // if factory was registered as a string, then convert it to a function
-      // the first time.
-      if (factory && ('string' === typeof factory)) {
-        factory = this.evaluate(factory, moduleId, packageId);
-        factories[packageId][moduleId] = factory;
-      }
+    // lookup the actual factory.  assume it's there since it passed ready()
+    factory = factories[moduleId];
+    
+    // if factory was registered as a string, then convert it to a function
+    // the first time.
+    if (factory && (STRING === typeof factory)) {
+      factory = this.evaluate(factory, moduleId);
+      factories[moduleId] = factory;
     }
 
     return factory;
@@ -263,9 +248,10 @@ Loader.prototype = {
   // load from the server.
   
   /**
-    Registers a package with the loader.  The package descriptor should
-    include properties to describe scripts that should be loaded as well
-    as dependencies.
+    Registers a package or module with the loader.  If the name you pass 
+    contains a package only, then we expect the second property to contain a
+    package descriptor.  If the name contains a package and module, then the
+    second parameter should be a factory string or function.
     
     If you call this method more than once with the same package name,
     the new package descriptor will replace the old one, so beware!
@@ -274,7 +260,10 @@ Loader.prototype = {
     @param {Hash} desc a package descriptor
     @returns {Loader} receiver
   */
-  register: function register(name, desc) {
+  register: function(name, desc) {
+    
+    if (name.indexOf(':')>0) return this.module(name, desc);
+    
     var catalog = this._catalog, key;
     if (!catalog) catalog = this._catalog = {};
     catalog[name] = desc;
@@ -301,14 +290,15 @@ Loader.prototype = {
   /**
     Registers a script with the loader.  If this is the first time this
     has been called, resolves a promise and adds the URL to the scripts
-    array.
+    array.  You should pass a symbolic name that represents the specific 
+    script being loaded.  This may or may not match the actual load URL
     
-    @param {String} url the script to load
+    @param {String} id the script that was loaded
     @returns {Loader} reciever
   */
-  script: function script(url) {
-    if (!this._resolved(SCRIPTS, url)) this.scripts.push(url);
-    this._promiseFor(SCRIPTS, url).resolve(url);        
+  script: function script(id) {
+    if (!this._resolved(SCRIPTS, id)) this.scripts.push(id);
+    this._promiseFor(SCRIPTS, id).resolve(id);        
     return this;
   },
   
@@ -316,6 +306,8 @@ Loader.prototype = {
     Registers that a given stylesheet has been loaded.  If this is the 
     first time this has been called, resolves a promise and adds the URL
     to the stylesheets array.
+    
+    @param {String} url the URL of the stylesheet that was loaded
   */
   stylesheet: function stylesheet(url) {
     if (!this._resolved(STYLESHEETS, url)) this.stylesheets.push(url);
@@ -324,27 +316,20 @@ Loader.prototype = {
   },
   
   /**
-    Registers a module with the loader. 
+    Registers a module with the loader.  Normally you should call register()
+    instead.
     
-    @param {String} pkgName name of package the module belongs to
-    @param {String} moduleName name of module itself
+    @param {String} moduleId name of module itself with package
     @param {Function} factory factory function for module
     @returns {Loader} receiver
   */
-  module: function module(pkgName, moduleName, factory) {
-    var factories = this._factories, sub;
+  module: function module(moduleId, factory) {
+    var factories = this._factories;
     if (!factories) factories = this._factories = {};
-    sub = factories[pkgName];
-    if (!sub) sub = factories[pkgName] = {} ;
-    sub[moduleName] = factory;
+    factories[moduleId] = factory ;
     
-    if (!this._resolved(MODULES, pkgName, moduleName)) {
-      var modules = this.modules[pkgName];
-      if (!modules) modules = this.modules[pkgName] = [];
-      modules.push(moduleName);
-    }
-    
-    this._promiseFor(MODULES, pkgName, moduleName).resolve(moduleName);
+    if (!this._resolved(MODULES, moduleId)) this.modules.push(moduleId);
+    this._promiseFor(MODULES, moduleId).resolve(moduleId);
   },
 
   /**
@@ -352,13 +337,13 @@ Loader.prototype = {
     to return the package info when completed.  Use the promise module to
     handle this promise.
   */
-  async: function async(pkgName, fromPackageName) {
-    var ret = this._promiseFor(LOADS, pkgName);
+  async: function(packageId) {
+    var ret = this._promiseFor(LOADS, packageId);
     
     // if the promise is pending (meaning it hasn't been started yet),
     // then either resolve it now or setup an action to load.
     if (ret.status === promise.PENDING) {
-      if (this.ready(pkgName)) {
+      if (this.ready(packageId)) {
         ret.resolve(); // already loaded - just resolve.
 
       // not fully loaded yet.  Setup the promise action and run it.
@@ -380,8 +365,8 @@ Loader.prototype = {
           
           // wait for package to be registered.  Once registered, load 
           // all of its contents and then resolve the load promise.
-          loader._promiseFor(CATALOG, pkgName).then(pr, function() {
-            loader._loadPackage(pkgName, pr);
+          loader._promiseFor(CATALOG, packageId).then(pr, function() {
+            loader._loadPackage(packageId, pr);
             pr.resolve();
             
           // handle cancelling...
@@ -390,7 +375,7 @@ Loader.prototype = {
           // in case there is info already in the catalog, get it going.
           // any of these items must load before the promise can resolve 
           // as well.
-          loader._loadPackage(pkgName, pr);
+          loader._loadPackage(packageId, pr);
           
         }).run();
       }
@@ -403,21 +388,27 @@ Loader.prototype = {
     Requires a module.  This will instantiate a module in the default 
     sandbox.
   */
-  require: function require(packageName, moduleName) {
-    return this.sandbox.require(packageName, moduleName);
+  require: function require(moduleId) {
+    return this.sandbox.require(moduleId);
   },
   
   /**
     Return true if package or module is ready.
     
-    @param {String} packageName package name
-    @param {String} moduleName optional module name
+    @param {String} moduleId package or module id
     @returns {Boolean} true if ready
   */
-  ready: function ready(packageName, moduleName) {
-    if (!this._resolved(CATALOG, packageName)) return false;
+  ready: function ready(moduleId) {
     
-    var info = this._catalog[packageName], items, loc;
+    var idx, packageId, info, items, loc, scriptId, styleId;
+
+    idx = moduleId.indexOf(':');
+    if (idx>=0) packageId = moduleId.slice(0, idx);
+    else packageId = moduleId ;
+        
+    // is package loaded already? - nothing to do if not
+    if (!this._resolved(CATALOG, packageId)) return false;
+    info = this._catalog[packageId];
     
     // check dependencies
     items = info.depends;
@@ -430,19 +421,23 @@ Loader.prototype = {
     items = info.stylesheets ;
     loc = items ? items.length : 0;
     while (--loc >= 0) {
-      if (!this._resolved(STYLESHEETS, items[loc])) return false ;
+      styleId = items[loc];
+      if (STRING !== typeof styleId) styleId = styleId.url;
+      if (!this._resolved(STYLESHEETS, styleId)) return false ;
     }
     
     // check scripts
     items = info.scripts;
     loc = items ? items.length : 0;
     while(--loc >= 0) {
-      if (!this._resolved(SCRIPTS, items[loc])) return false ;
+      scriptId = items[loc];
+      if (STRING !== typeof scriptId) scriptId = scriptId.id;
+      if (!this._resolved(SCRIPTS, scriptId)) return false ;
     }
     
     // check module if provided...
-    if (moduleName) {
-      if (!this._resolved(MODULES, packageName, moduleName)) return false;
+    if (moduleId !== packageId) {
+      if (!this._resolved(MODULES, moduleId)) return false;
     }
     
     return true ;
@@ -458,8 +453,16 @@ Loader.prototype = {
     then setup an action on the promise to actually load the script. Once
     the script registers itself, this promise will resolve.
   */
-  _loadScript: function(url) {
-    var pr = this._promiseFor(SCRIPTS, url);
+  _loadScript: function(scriptId) {
+    var id, url, pr;
+
+    // normalize scriptId.
+    if (STRING !== typeof(scriptId)) {
+      id = scriptId.id;  
+      url = scriptId.url; 
+    } else id = url = scriptId;
+    
+    pr = this._promiseFor(SCRIPTS, id);
     if (pr.status === promise.PENDING) {
       var loader = this ;
       pr.action(function(pr) {
@@ -478,12 +481,17 @@ Loader.prototype = {
 
   /** @private
   
-    Gets a promise to load a script.  If the promise is still pending,
+    Gets a promise to load a stylesheet.  If the promise is still pending,
     then setup an action on the promise to actually load the script. Once
     the script registers itself, this promise will resolve.
   */
-  _loadStylesheet: function(url) {
-    var pr = this._promiseFor(STYLESHEETS, url);
+  _loadStylesheet: function(styleId) {
+    var pr;
+
+    // normalize scriptId.
+    if (STRING !== typeof(styleId)) styleId = styleId.url;
+    
+    pr = this._promiseFor(STYLESHEETS, styleId);
     if (pr.status === promise.PENDING) {
       var loader = this ;
       pr.action(function(pr) {
@@ -492,11 +500,11 @@ Loader.prototype = {
         
         el = document.createElement('link');
         el.setAttribute('rel', 'stylesheet');
-        el.setAttribute('href', url);
+        el.setAttribute('href', styleId);
         body.appendChild(el);
         body = el = null ;
         
-        loader.stylesheet(url); // register and resolve promise
+        loader.stylesheet(styleId); // register and resolve promise
       });
     }
     return pr;
@@ -508,8 +516,8 @@ Loader.prototype = {
     passed, the promise will depend on any found items loading.  May do 
     nothing.
   */
-  _loadPackage: function(pkgName, pr) {
-    var info = this._catalog ? this._catalog[pkgName] : null,
+  _loadPackage: function(packageId, pr) {
+    var info = this._catalog ? this._catalog[packageId] : null,
         items, loc, item, ordered, next, prDepends;
         
     if (!info) return this; // nothing to do
@@ -603,7 +611,7 @@ Loader.prototype = {
     while(--loc>=0) {
       link = links[loc];
       if (!link || (link.rel !== 'stylesheet')) continue;
-      link = link.getAttribute('href');
+      link = link.href;
       if (link) this.stylesheet(link.toString());
     }
     
@@ -655,40 +663,51 @@ Loader.prototype = {
       lines.push('');
     }
             
-    for(key in modules) {
-      if (!modules.hasOwnProperty(key)) continue ;
-
-      names = modules[key];
-      len   = names ? names.length : 0;
-      if (len===0) continue;
-
-      if (!emitted) {
-        lines.push("  modules: ");
-        emitted = true;
-      }
-      
-      for(idx=0;idx<len;idx++) lines.push("   " + key + ':' + names[idx]);
+    if (this.modules.length>0) {
+      lines.push("  modules: ");
+      len = this.modules.length;
+      for(idx=0;idx<len;idx++) lines.push("    " + this.modules[idx]);
       lines.push('');
     } 
     
     return lines.join("\n");
   },
   
-  _inspectModule: function(packageName, moduleName) {
-    var lines = [];
-    lines.push(packageName + ':' + moduleName + " (" + (this.ready(packageName, moduleName) ? 'READY' : 'NOT READY') + "):");
-    lines.push(this._inspectPackage(packageName));
+  _inspectModule: function(moduleId) {
+    var lines = [],
+        packageId = moduleId.slice(0, moduleId.indexOf(':')),
+        tmp;
+        
+    // if the named package does not exist, see if it is in tiki
+    if (this._catalog && !this._catalog[packageId]) {
+      tmp = 'tiki/' + packageId;
+      if (this._catalog[tmp]) {
+        packageId = tmp;
+        moduleId  = 'tiki/' + moduleId;
+      }     
+    }
+    
+    lines.push(moduleId + " (" + (this.ready(moduleId) ? 'READY' : 'NOT READY') + "):");
+    
+    lines.push(this._inspectPackage(packageId));
     return lines.join("\n");
   },
   
-  _inspectPackage: function(packageName) {
+  _inspectPackage: function(packageId) {
+
+
+    // if the named package does not exist, see if it is in tiki
+    if (this._catalog && !this._catalog[packageId]) {
+      var tmp = 'tiki/' + packageId;
+      if (this._catalog[tmp]) packageId = tmp;
+    }
 
     // emit header...
     var lines = [],
-        info  = this._catalog ? this._catalog[packageName] : null,
+        info  = this._catalog ? this._catalog[packageId] : null,
         idx, len, item, parts;
         
-    lines.push(packageName + " (" + (this.ready(packageName) ? 'READY' : 'NOT READY') + "): " + (info ? '' : 'Not in Catalog!') );
+    lines.push(packageId + " (" + (this.ready(packageId) ? 'READY' : 'NOT READY') + "): " + (info ? '' : 'Not in Catalog!') );
     
     if (!info) return lines.join("\n");
     
@@ -707,6 +726,7 @@ Loader.prototype = {
       lines.push("\n  scripts:");
       for(idx=0;idx<len;idx++) {
         item = info.scripts[idx];
+        if (STRING !== typeof item) item = item.id
         lines.push('    ' + item + ' (' + (this._resolved(SCRIPTS, item) ? 'READY' : 'NOT READY') + ')');
       }
     }
@@ -716,6 +736,7 @@ Loader.prototype = {
       lines.push("\n  stylesheets:");
       for(idx=0;idx<len;idx++) {
         item = info.stylesheets[idx];
+        if (STRING !== typeof item) item = item.id
         lines.push('    ' + item + '(' + (this._resolved(STYLESHEETS, item) ? 'READY' : 'NOT READY') + ')');
       }
     }
@@ -724,10 +745,10 @@ Loader.prototype = {
   },
 
   /** @private */
-  inspect: function(packageName, moduleName) {
+  inspect: function(id) {
     if (arguments.length === 0) return this._inspectLoader();
-    else if (!moduleName) return this._inspectPackage(packageName);
-    else return this._inspectModule(packageName, moduleName);
+    else if (id.indexOf(':')<0) return this._inspectPackage(id);
+    else return this._inspectModule(id);
   },
   
   /** @private - toString for loader */
@@ -743,6 +764,11 @@ core.setupDisplayNames(Loader.prototype, 'Loader');
 // setup the default loader if needed.  pass in the current loader
 setup = function setup(curLoader, env) {
   if (curLoader && !curLoader.isBootstrap) return curLoader;
+  
+  // bootstrap env
+  if (!env) env = {};
+  if ('undefined' !== typeof window) env.window = window;
+  if ('undefined' !== typeof document) env.document = document;
   
   var queue = curLoader ? curLoader.queue : null,
       id    = curLoader ? curLoader.id : 'default',

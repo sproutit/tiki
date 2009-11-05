@@ -4,11 +4,12 @@
 // ==========================================================================
 /*globals Logger console core */
 
-"import tiki:core as core";
+"import tiki:package as tiki";
+"import core as core";
 "export package Logger console";
 
 /** 
-  @namespace logger
+  @file
 
   Module defines generic functions that can be used to log output into a 
   string or file.
@@ -19,9 +20,23 @@
   The console object logs this to a system-provided console (on browsers this
   is equivalent to the system-provided console).
 
-  @since SproutCore 1.1
+  @since Tiki 1.0
 */
 
+// get the platform console
+var pconsole = tiki.platform('console').console;
+
+/**
+  Logger class defines a standard logger.  If you attach a console, then the
+  logger will record its own results AND forward any output to the console 
+  itself.  
+  
+  A default logger is usually created and exported as "console" that will 
+  attach to the platform console.  You can create a new logger if you want as 
+  well.
+
+  @since Tiki 1.0
+*/
 Logger = function Logger(id, console) {
   this.id = id ;
   this.console = console;
@@ -168,6 +183,4 @@ Logger.prototype = {
 };
 Logger.prototype.log = Logger.prototype.info;
 
-// handle window.console, if defined
-var win = ('undefined' !== typeof window) ? window : null;
-console = new Logger('console', win ? win.console : null);
+console = new Logger('console', pconsole);

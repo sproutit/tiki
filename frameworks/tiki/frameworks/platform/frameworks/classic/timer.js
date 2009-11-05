@@ -5,6 +5,7 @@
 /*globals schedule repeat cancel */
 
 "export schedule repeat cancel";
+"use factory_format function";
 
 /**
   @file
@@ -72,11 +73,20 @@ repeat = function repeat(after, callback, target) {
 /**
   Cancels the passed timer.  It will no longer be invoked.
 
-  @param {Object} the timer object
+  @param {Object} timer object returned from schedule() or repeat()
+  @param {Boolean} repeats must be YES if this is repeating.
   @returns {void}
 */
-cancel: function cancel(timer) {
-  clearTimeout(timer);
-  clearInterval(timer);
+cancel: function cancel(timer, repeats) {
+  if (repeats === undefined) {
+    clearTimeout(timer);
+    clearInterval(timer);
+  
+  } else if (repeats) {
+    clearInterval(timer);
+  
+  } else {
+    clearTimeout(timer) 
+  }
 };
 

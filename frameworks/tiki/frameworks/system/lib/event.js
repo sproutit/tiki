@@ -4,7 +4,7 @@
 // ==========================================================================
 /*globals Event event */
 
-"import tiki:core as core";
+"import core as core";
 "export Event Timer add remove send flush next once after begin end run";
 
 // low-level event system.  Note that this does not actually hook into the 

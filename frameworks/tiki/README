@@ -3,13 +3,45 @@ Project:   Tiki
 Copyright: ©2009 Apple Inc.
 =============================================================================
 
-Tiki is a lightweight implementation of CommonJS for the web browser.  It 
-includes a simple module loader and package manager along with some of the 
-default modules defined in the CommonJS spec.
+Tiki is a lightweight CommonJS loader.  To use tiki, require it before all 
+other frameworks in your application and then turn on module and loader 
+support in your Buildfile.
 
-The purpose of this project is to provide a very basic version of CommonJS 
-that can be used in a wide array of projects.
+== Tiki Loader
 
-Tiki is small and it can be safely loaded more than once so you can embed it 
-at the front of any JavaScript package that might require it.
+The tiki loader is a self-contained framework that implements a simple module
+loader for JS.  You can register packages, which map to one or more scripts 
+that must be loaded.  Each script can contain zero or more modules, which 
+must be registered separately.
 
+The loader has the ability to track dependencies between packages and modules
+so that loading one package will automatically load any dependent package as 
+well.
+
+Additionally, the loader supports the concept of a "sandbox", which actually
+manages instances of particular modules.  You can theoretically use sandboxes
+to isolate code into segments that can only access modules they are allowed
+to directly manipulate.
+
+== Other Frameworks
+
+Aside from the code loader, tiki also includes a system framework and one or
+more platform frameworks as well.  
+
+The system framework contains standard low-level JavaScript libraries for use 
+in your application.  These libraries are designed around providing simple 
+services, optimized for performance and memory usage.
+
+The platform frameworks implement a common API across multiple JS platforms.
+Currently the primary platforms under development are:
+
+  - classic: implements the platform API for traditional desktop-based 
+             browsers, including IE
+             
+  - html5:   implements the platform API for modern HTML5 browsers only, 
+             including MobileSafari, Fennec, and late versions of WebKit and
+             Firefox.  You can choose to use this platform if you can exclude
+             IE8 or earlier.
+  
+  - server:  This is an experimental platform for JS-servers such as Narwhal
+  

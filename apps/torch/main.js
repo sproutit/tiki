@@ -14,8 +14,9 @@
 // As you develop your application you will probably want to override this.
 // See comments for some pointers on what to do next.
 //
-Torch.main = function main() {
-  require('sample_test').plan.run();
+Torch.main = function() {
+  console.log('main!');
+  
 } ;
 
-main = function main() { Torch.main(); }
+main = function() { Torch.main(); }

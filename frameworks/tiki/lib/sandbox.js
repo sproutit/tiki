@@ -7,6 +7,8 @@
 "export package Sandbox";
 "export create";
 
+"use factory_format function";
+
 /**
   @file
   
@@ -43,70 +45,76 @@
 */
 Sandbox = function Sandbox(id, loader, env) {
 
-  var modules  = {}, // instantiated modules
-      packages = {}, // names of packages & modules instantiated so far
+  var allExports = {}, // instantiated modules
+      modules  = [], // names of instantiated modules
       HASH     = {},
       sandbox  = this;
 
   this.id = id ;
-  this.packages = packages;
+  this.modules = modules;
+  this.loader = loader ; // expose loader
 
+  // private clear method
   function _clear() {
-    modules = {} ;
-    packages = {} ;
+    
+    // if one or more module ids are passed, remove them
+    var loc = arguments.length, moduleId;
+    if (loc>0) {
+      while(--loc>0) {
+        moduleId = arguments[loc];
+        if (moduleId && allExports[moduleId]) {
+          delete allExports[moduleId];
+          modules.splice(modules.indexOf(moduleId), 1);
+        }
+      }
+
+    // no arguments passed, clear ALL exports.
+    } else {
+      allExports = {} ;
+      modules.length = 0 ;
+    }
   }
   _clear.displayName = 'Sandbox.clear';
   
   // this is the core require method.  requires that you pass either a 
   // bundleId
-  function _require(moduleId, packageId, curModuleId, curPackageId) {
-    var require, info, pkg, exports, moduleInfo, factory;
+  function _require(moduleId, curModuleId) {
+    var req, exports, moduleInfo, factory;
 
-    // normalize - if no packageId was passed, use curPackageId
-    if (packageId === undefined) packageId = curPackageId;
+    // convert to canonical moduleId reference.
+    moduleId = loader.canonical(moduleId, curModuleId);
+
+    // see if its already initialized. return if so
+    if (exp = allExports[moduleId]) return exp;
     
-    // convert require to canonical reference to a packageId/moduleId
-    info = loader.canonical(moduleId, curModuleId, packageId, HASH);
-    packageId = info.packageId; moduleId = info.moduleId;
+    // not defined...create it
+    modules.push(moduleId);
 
-    // see if its already initialized
-    pkg = modules[packageId];
-    if (!pkg) pkg = modules[packageId] = {};
-    exports = pkg[moduleId];
-    if (exports) return exports ;
-
-    // add package/module name to list so others can iterate it
-    info = packages[packageId];
-    if (!info) info = packages[packageId] = [];
-    info.push(moduleId);
-    
     // not initialized, init module 
-    pkg[moduleId] = exports = {};
+    allExports[moduleId] = exports = {};
     
     // generate custom require with safe info exposed
-    require = function(b, m) {
-      return _require(b, m, moduleId, packageId);
-    };
-    require.displayName = 'Sandbox.require';
+    req = function(m) { return _require(m, moduleId); };
+    req.displayName = 'Sandbox.require';
     
-    require.loader  = loader ;
-    require.clear   = _clear;
-    require.env     = env || {};
+    req.loader  = loader ;
+    req.clear   = _clear;
+    req.env     = env || {};
+    req.sandbox = this;
     
     // setup module info describing module state
-    moduleInfo = { sandbox: sandbox, id: moduleId, packageId: packageId };
+    moduleInfo = { id: moduleId };
 
     // run module factory in loader
-    var func = loader.load(moduleId, null, packageId);
-    func.call(exports, require, exports, moduleInfo);
+    var func = loader.load(moduleId);
+    if (!func) throw "could not load function for " + moduleId;
+    func.call(exports, req, exports, moduleInfo);
 
     return exports;
   }
 
   // require a module...
-  this.require = function(moduleId, packageId) {
-    return _require(moduleId, packageId);
-  };
+  this.require = function(moduleId) { return _require(moduleId); };
   this.require.displayName = 'Sandbox.require';
 
 };
