@@ -20,7 +20,7 @@
 */
 
 var env = require.env;
-console = (env && env.window) ? env.window.console : null;
+console = (env && env.global) ? env.global.console : null;
 
 
 
