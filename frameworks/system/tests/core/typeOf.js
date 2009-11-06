@@ -6,7 +6,7 @@
 /*globals typeOf T_UNDEFINED T_NULL T_BOOLEAN T_BOOL T_NUMBER T_STRING T_HASH */
 
 "import core_test:package";
-"import tiki:core";
+"import core";
 
 module("typeOf");
 

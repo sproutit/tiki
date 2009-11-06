@@ -6,7 +6,7 @@
 /*globals isArray */
 
 "import core_test:package";
-"import tiki:core";
+"import core";
 
 module("isArray");
 
