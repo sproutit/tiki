@@ -8,7 +8,9 @@ config :tiki,
   :debug_required => [],
   :test_required  => [], # we actually require core_test :(
   :use_modules    => true,
-  :use_loader     => true
+  :use_loader     => true,
+  :factory_format => :function, # string is not needed here
+  :combine_javascript => true # always improve load times
   
 %w(platform/classic platform/html5 platform/server).each do |target|
   config target,
@@ -16,7 +18,8 @@ config :tiki,
     :debug_required => [],
     :test_required  => [:core_test],
     :use_modules    => true,
-    :use_loader     => true
+    :use_loader     => true,
+    :combine_javascript => true
 end
 
 config :system, 
@@ -24,6 +27,7 @@ config :system,
   :debug_required => [],
   :test_required => [:core_test],
   :use_modules => true,
-  :use_loader => true
+  :use_loader => true,
+  :combine_javascript => true
   
 
