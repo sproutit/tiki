@@ -4,8 +4,8 @@
 // ==========================================================================
 /*globals Logger console core */
 
-"import tiki:package as tiki";
 "import core as core";
+"import lib/platform";
 "export package Logger console";
 
 /** 
@@ -24,7 +24,7 @@
 */
 
 // get the platform console
-var pconsole = tiki.platform('console').console;
+var pconsole = require('console', PLATFORM_PACKAGE).console;
 
 /**
   Logger class defines a standard logger.  If you attach a console, then the

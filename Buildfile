@@ -3,24 +3,31 @@
 # Copyright: ©2009 Apple Inc.
 # ===========================================================================
 
+#######################################################
+## CORE TIKI FRAMEWORK
+##
+
 config :tiki, 
   :required       => [],
   :debug_required => [],
-  :test_required  => [], # we actually require core_test :(
+  :test_required  => [],
   :use_modules    => true,
   :use_loader     => true,
   :factory_format => :function, # string is not needed here
   :combine_javascript => true # always improve load times
+
+# Special framework for testing tiki
+config :tiki_tests,
+  :required => [:tiki],
+  :debug_required => [],
+  :test_required  => [:core_test],
+  :use_modules    => true,
+  :use_loader     => true,
+  :factory_format => :function
   
-%w(platform/classic platform/html5 platform/server).each do |target|
-  config target,
-    :required       => [:tiki],
-    :debug_required => [],
-    :test_required  => [:core_test],
-    :use_modules    => true,
-    :use_loader     => true,
-    :combine_javascript => true
-end
+#######################################################
+## TIKI/SYSTEM FRAMEWORK
+##
 
 config :system, 
   :required => [:tiki, 'platform/classic'],
@@ -29,5 +36,17 @@ config :system,
   :use_modules => true,
   :use_loader => true,
   :combine_javascript => true
-  
 
+#######################################################
+## PLATFORM FRAMEWORKS
+##
+
+%w(platform/classic).each do |target|
+  config target,
+    :required       => [:tiki],
+    :debug_required => [],
+    :test_required  => [:core_test],
+    :use_modules    => true,
+    :use_loader     => true,
+    :combine_javascript => true
+end

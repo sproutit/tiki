@@ -3,7 +3,7 @@
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
 
-"export package PLATFORM_PACKAGE PLATFORM platform";
+"export package PLATFORM PLATFORM_PACKAGE info env";
 "use factory_format function";
 
 /**
@@ -14,7 +14,8 @@
   exported by this package like so:
   
   {{{
-    mod = require('platform:package').platform('module');
+    sys = require('system');
+    mod = require('module', sys.PLATFORM_PACKAGE);
   }}}
   
 */
@@ -27,43 +28,27 @@
   
   @property {String}
 */
-var PlATFORM_PACKAGE = null;
+PLATFORM_PACKAGE = null;
 
 /**
   Name of the current platform.
   
   @property {String}
 */
-var PLATFORM = 'unknown';
+PLATFORM = platform = 'unknown';
 
 // compute the default platform package name
 var env;
 
 if (env = require.env) {
-  PLATFORM = env.platform;
-  if (!(PLATFORM_PACKAGE = env.platformPackage)) {
-    if (env.platform) PLATFORM_PACKAGE = 'platform/' + env.platform;
+  platform = PLATFORM = env.PLATFORM || env.platform;
+  PLATFORM_PACKAGE = env.PLATFORM_PACKAGE || env.platformPackage;
+  if (!PLATFORM_PACKAGE && platform) {
+    PLATFORM_PACKAGE = 'platform/' + platform;
   }
 }
 
-var cache = {}, TMP_ARY = [PLATFORM_PACKAGE];
+// get the info for the current platform
+info = require('info', PLATFORM_PACKAGE);
 
-/**
-  Returns the corresponding module in the current platform package.
-  
-  @param {String} moduleName the name of the package
-  @returns {Obejct} exports for the named module or null
-*/
-platform = function(moduleName) {
-  if (!PLATFORM_PACKAGE) return null; // no platform available
-
-  var ret = cache[moduleName];
-  if (!ret) {
-    TMP_ARY[1] = moduleName;
-    ret = TMP_ARY.join((moduleName.indexOf(':')>=0) ? '/' : ':');
-    cache[moduleName] = ret ;
-    TMP_ARY[1] = null;
-  }
-  
-  return require(ret);
-};
+env = require.env;
