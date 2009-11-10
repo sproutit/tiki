@@ -30,9 +30,9 @@ config :tiki_tests,
 ##
 
 config :system, 
-  :required => [:tiki, 'platform/classic'],
+  :required => [:tiki, (SC.env.platform || 'tiki/platform/classic')],
   :debug_required => [],
-  :test_required => [:core_test],
+  :test_required => [], # see tests in tiki_tests
   :use_modules => true,
   :use_loader => true,
   :combine_javascript => true
@@ -45,7 +45,7 @@ config :system,
   config target,
     :required       => [:tiki],
     :debug_required => [],
-    :test_required  => [:core_test],
+    :test_required  => [], # tests are in tiki_tests
     :use_modules    => true,
     :use_loader     => true,
     :combine_javascript => true

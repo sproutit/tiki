@@ -24,7 +24,7 @@
 */
 
 // get the platform console
-var pconsole = require('console', PLATFORM_PACKAGE).console;
+var pconsole = require(PLATFORM_PACKAGE).console;
 
 /**
   Logger class defines a standard logger.  If you attach a console, then the

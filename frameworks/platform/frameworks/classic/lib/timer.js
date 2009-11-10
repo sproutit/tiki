@@ -2,9 +2,10 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals schedule repeat cancel */
+/*globals schedule repeat cancel timer exports */
 
 "export schedule repeat cancel";
+"export package timer";
 "use factory_format function";
 
 /**
@@ -45,7 +46,7 @@
   @param {Object} target optional context to use for this
   @returns {Object} the timer object
 */
-schedule = function schedule(after, callback, target) {
+schedule = function(after, callback, target) {
   var ret, func;
   func = target ? function() { callback.call(target, ret); } : callback; 
   ret = setTimeout(after, func);
@@ -62,7 +63,7 @@ schedule = function schedule(after, callback, target) {
   @param {Object} target optional context to use for this
   @returns {Object} the timer object
 */
-repeat = function repeat(after, callback, target) {
+repeat = function(after, callback, target) {
   var ret, func;
   func = target ? function() { callback.call(target, ret); } : callback; 
   ret = setInterval(after, func); 
@@ -77,7 +78,7 @@ repeat = function repeat(after, callback, target) {
   @param {Boolean} repeats must be YES if this is repeating.
   @returns {void}
 */
-cancel: function cancel(timer, repeats) {
+cancel = function(timer, repeats) {
   if (repeats === undefined) {
     clearTimeout(timer);
     clearInterval(timer);
@@ -86,7 +87,9 @@ cancel: function cancel(timer, repeats) {
     clearInterval(timer);
   
   } else {
-    clearTimeout(timer) 
+    clearTimeout(timer) ;
   }
 };
 
+// make this API visible in the package as "timer"
+timer = exports ;

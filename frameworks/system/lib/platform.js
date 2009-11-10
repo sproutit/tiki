@@ -38,9 +38,8 @@ PLATFORM_PACKAGE = null;
 PLATFORM = platform = 'unknown';
 
 // compute the default platform package name
-var env;
-
-if (env = require.env) {
+env = require.env;
+if (env) {
   platform = PLATFORM = env.PLATFORM || env.platform;
   PLATFORM_PACKAGE = env.PLATFORM_PACKAGE || env.platformPackage;
   if (!PLATFORM_PACKAGE && platform) {
@@ -49,6 +48,4 @@ if (env = require.env) {
 }
 
 // get the info for the current platform
-info = require('info', PLATFORM_PACKAGE);
-
-env = require.env;
+info = require(PLATFORM_PACKAGE).info;

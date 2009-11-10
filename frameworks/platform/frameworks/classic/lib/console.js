@@ -4,7 +4,7 @@
 // ==========================================================================
 /*globals console */
 
-"export console";
+"export package console";
 "use factory_format function";
 
 /**

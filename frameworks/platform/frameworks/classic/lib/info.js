@@ -2,7 +2,10 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals schedule repeat cancel */
+/*globals browser userAgent info exports */
+
+"export browser userAgent";
+"export package info";
 
 /**
   @file
@@ -16,10 +19,11 @@
 // BROWSER DESCRIPTION
 // 
 
-var userAgent = navigator.userAgent.toLowerCase();
+userAgent = navigator.userAgent.toLowerCase();
+
 var version = (userAgent.match( /.+(?:rv|it|ra|ie)[\/: ]([\d.]+)/ ) || [])[1];
 
-var browser = {
+browser = {
   
   /** The current browser version */
   version: version,
@@ -66,5 +70,6 @@ browser.current =
   browser.safari ? 'safari' : 
   browser.opera ? 'opera' : 'unknown' ;
 
-exports.browser = browser ;
-exports.userAgent = userAgent ;
+
+// make this module visible as "info"
+info = exports ;
