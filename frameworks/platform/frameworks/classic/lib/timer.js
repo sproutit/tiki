@@ -49,7 +49,7 @@
 schedule = function(after, callback, target) {
   var ret, func;
   func = target ? function() { callback.call(target, ret); } : callback; 
-  ret = setTimeout(after, func);
+  ret = setTimeout(func, after);
   callback = null; // cleanup memory
   return ret ;
 };
@@ -66,7 +66,7 @@ schedule = function(after, callback, target) {
 repeat = function(after, callback, target) {
   var ret, func;
   func = target ? function() { callback.call(target, ret); } : callback; 
-  ret = setInterval(after, func); 
+  ret = setInterval(func, after); 
   callback = null; // cleanup memory
   return ret ;
 };
