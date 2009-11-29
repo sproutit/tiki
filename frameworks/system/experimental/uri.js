@@ -4,7 +4,7 @@
 // ==========================================================================
 /*globals URI create resolve relative */
 
-"import tiki:core";
+"import package tiki";
 "export URI resolve relative";
 
 /**

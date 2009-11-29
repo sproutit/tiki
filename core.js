@@ -4,7 +4,7 @@
 // ==========================================================================
 /*globals setupDisplayNames */
 
-"export setupDisplayNames";
+"export package setupDisplayNames";
 "use factory_format function";
 
 var TMP_ARY = [];
