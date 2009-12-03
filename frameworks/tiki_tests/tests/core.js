@@ -4,7 +4,7 @@
 // ==========================================================================
 /*globals core equal plan */
 
-"import core_test";
+"import package core_test";
 "import tiki:core as core";
 
 module("setupDisplayNames");

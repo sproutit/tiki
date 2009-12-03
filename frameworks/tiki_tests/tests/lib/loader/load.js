@@ -21,7 +21,7 @@ setup(function() {
   loader.module('app:str', factoryStr);
   
   packageFunc = function() {};
-  loader.module('app:package', packageFunc);
+  loader.module('app:index', packageFunc);
 });
 
 teardown(function() {

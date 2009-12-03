@@ -5,7 +5,7 @@
 /*globals test equal notEqual ok plan */
 /*globals typeOf T_UNDEFINED T_NULL T_BOOLEAN T_BOOL T_NUMBER T_STRING T_HASH */
 
-"import core_test:package";
+"import core_test:index";
 "import core";
 
 module("typeOf");

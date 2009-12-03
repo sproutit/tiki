@@ -3,7 +3,7 @@
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
 
-"import core_test:package";
+"import core_test:index";
 "import core as core";
 
 module("core.guidFor()");

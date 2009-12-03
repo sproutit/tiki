@@ -4,7 +4,8 @@
 // ==========================================================================
 /*globals core equal plan Loader setup teardown equal plan */
 
-"import core_test tiki";
+"import package core_test";
+"import package tiki";
 
 var loader ;
 
@@ -15,13 +16,13 @@ setup(function() {
   loader.register('app', {});
   loader.module('app:core', function() {});
   loader.module('app:system', function() {});
-  loader.module('app:package', function() {});
+  loader.module('app:index', function() {});
   
   loader.register('sproutcore/runtime', {});
-  loader.module('sproutcore/runtime:package', function() {});
+  loader.module('sproutcore/runtime:index', function() {});
   
   loader.register('tiki/system', {});
-  loader.module('tiki/system:package', function(){});
+  loader.module('tiki/system:index', function(){});
   loader.module('tiki/system:core', function() {});
   
   loader.register('no_package', {});
@@ -42,41 +43,41 @@ test("fully qualified id - known IDs", function() {
   equal(loader.canonical('app:core'), 'app:core', 
     'canonical(app:code) should return same id');
     
-  equal(loader.canonical('tiki/system:package', 'app:code'), 
-    'tiki/system:package', 
-    'canonical(tiki/system:package, app:code) should return same id');
+  equal(loader.canonical('tiki/system:index', 'app:code'), 
+    'tiki/system:index', 
+    'canonical(tiki/system:index, app:code) should return same id');
 });
 
 test("tiki fallbacks", function() {
-    equal(loader.canonical('system:package', 'app:code'), 
-      'tiki/system:package',
-      'canonical(system:package) should map to tiki/system package since no global system package exists');
+    equal(loader.canonical('system:index', 'app:code'), 
+      'tiki/system:index',
+      'canonical(system:index) should map to tiki/system package since no global system package exists');
       
-    equal(loader.canonical('foo:package', 'app:code'), 
-      'foo:package', 
-      'canonical(foo:package) should NOT map to tiki/foo since there is no tiki/foo');
+    equal(loader.canonical('foo:index', 'app:code'), 
+      'foo:index', 
+      'canonical(foo:index) should NOT map to tiki/foo since there is no tiki/foo');
       
     loader.register('tiki/app', {});
     loader.module('tiki/app:core', function() {});
 
-    equal(loader.canonical('app:code', 'sproutcore/runtime:package'),
+    equal(loader.canonical('app:code', 'sproutcore/runtime:index'),
       'app:code',
-      'canonical(app:package) should map to app since it exists');
+      'canonical(app:index) should map to app since it exists');
 });
 
 test("package ids", function() {
   equals(loader.canonical('sproutcore/runtime', 'app:core'), 
-    'sproutcore/runtime:package',
+    'sproutcore/runtime:index',
     'canonical(sproutcore/runtime) should return package module');
     
   equals(loader.canonical('system', 'sproutcore/runtime'), 
-    'tiki/system:package',
+    'tiki/system:index',
     'canonical(system, sproutcore/runtime) should return tiki/system package since system does not exist in runtime or as a package');
     
   equals(loader.canonical('system', 'app:core'), 'app:system',
     'canonical(system, app:core) should return system module since it exists in the app package');
     
-  equals(loader.canonical('no_package', 'app:core'), 'no_package:package',
+  equals(loader.canonical('no_package', 'app:core'), 'no_package:index',
     'canonical(no_package, app:core) should return non-existant package module since nothing else exists and this may be loaded');
 });
 

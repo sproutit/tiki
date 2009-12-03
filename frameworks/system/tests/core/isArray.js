@@ -5,7 +5,7 @@
 /*globals test equal notEqual ok plan */
 /*globals isArray */
 
-"import core_test:package";
+"import core_test:index";
 "import core";
 
 module("isArray");
