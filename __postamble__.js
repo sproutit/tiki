@@ -2,7 +2,7 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals tiki */
+/*globals tiki ENV */
 
 // This postamble runs when the loader and supporting modules are all 
 // registered, allowing the real loader to replace the bootstrap version.
@@ -12,4 +12,4 @@
 
 // note that the loader.setup method is safe so that calling this more than
 // once will only setup the default loader once.
-tiki = tiki.require('tiki:lib/loader').setup(tiki, ('undefined' === typeof ENV) ? null : ENV) ;
+tiki = tiki.require('tiki:index').setup(tiki, ('undefined' === typeof ENV) ? null : ENV) ;

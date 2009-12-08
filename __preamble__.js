@@ -2,7 +2,7 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals tiki */
+/*globals tiki ENV ARGV */
 
 "use modules false";
 "use loader false";
@@ -95,6 +95,10 @@ if ("undefined" === typeof tiki) { var tiki = function() {
     }
     
   };
+  
+  tiki.require.loader = tiki;
+  tiki.ENV = (typeof ENV !== 'undefined') ? ENV : undefined;
+  tiki.ARGV = (typeof ARGV !== 'undefined') ? ARGV : undefined;
   
   return tiki;
   
