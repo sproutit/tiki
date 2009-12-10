@@ -1,7 +1,0 @@
-=============================================================================
-Project:   SproutCore System Bundle
-Copyright: ©2009 Apple Inc.
-=============================================================================
-
-The system bundle contains low-level utility modules needed by all JavaScript 
-systems.  This code is used by the loader as well as sproutcore/runtime.

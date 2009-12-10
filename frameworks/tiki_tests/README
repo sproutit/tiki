@@ -1,4 +1,0 @@
-TIKI TESTS:
-
-Since core_test depends on tiki, tiki tests are put into this framework to 
-avoid cyclical dependencies.
