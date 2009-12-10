@@ -2,10 +2,7 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals console */
-
-"export package console";
-"use factory_format function";
+/*globals exports */
 
 /**
   @file
@@ -19,8 +16,5 @@
   
 */
 
-var env = require.env;
-console = (env && env.global) ? env.global.console : null;
-
-
+exports.console = console;
 

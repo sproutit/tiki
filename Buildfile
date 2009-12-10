@@ -15,7 +15,7 @@ config :tiki,
   :use_loader     => true,
   :factory_format => :function, # string is not needed here
   :module_lib  => ['lib', 'debug'],
-  :combine_javascript => true # always improve load times
+  :combine_javascript => false # always improve load times
 
 # Special framework for testing tiki
 config :tiki_tests,
