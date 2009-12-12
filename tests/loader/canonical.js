@@ -5,9 +5,10 @@
 /*globals core equal plan Loader setup teardown equal plan */
 
 "import package core_test";
-"import package tiki";
 
 var loader ;
+
+console.log('RUNNING!');
 
 module("Loader.canonical");
 
@@ -39,6 +40,8 @@ teardown(function() {
 // 
 
 test("fully qualified id - known IDs", function() {
+  
+  console.log('RUN');
   
   equal(loader.canonical('app:core'), 'app:core', 
     'canonical(app:code) should return same id');

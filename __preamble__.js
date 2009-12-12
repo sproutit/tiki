@@ -19,9 +19,10 @@
 */
 if ("undefined" === typeof tiki) { var tiki = function() {
   
-  var queue = [];
-  var factories = {} ; // temporary store of modules
-  var modules = {};
+  var UNDEFINED = 'undefined',
+      queue = [],
+      factories = {}, // temporary store of modules
+      modules = {};
   
   // save a registration method in a queue to be replayed later once the 
   // real loader is available.
@@ -41,7 +42,17 @@ if ("undefined" === typeof tiki) { var tiki = function() {
     queue: queue, 
     
     // helpers just record into queue
-    register: function() { 
+    register: function(packageId, opts) { 
+      
+      // this hack will make unit tests work for tiki by adding core_test to
+      // the list of dependencies.
+      if ((packageId === 'tiki') && (UNDEFINED !== typeof ENV)) {
+        if ((ENV.app === 'tiki') && (ENV.mode === 'test')) {
+          if (!opts.depends) opts.depends = [];
+          opts.depends.push('core_test');
+        }
+      }
+      
       _record('register', arguments);
        return this;  
     },
@@ -97,8 +108,8 @@ if ("undefined" === typeof tiki) { var tiki = function() {
   };
   
   tiki.require.loader = tiki;
-  tiki.ENV = (typeof ENV !== 'undefined') ? ENV : undefined;
-  tiki.ARGV = (typeof ARGV !== 'undefined') ? ARGV : undefined;
+  tiki.ENV = (typeof ENV !== UNDEFINED) ? ENV : undefined;
+  tiki.ARGV = (typeof ARGV !== UNDEFINED) ? ARGV : undefined;
   
   return tiki;
   

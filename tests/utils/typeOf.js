@@ -2,11 +2,13 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals test equal notEqual ok plan */
-/*globals typeOf T_UNDEFINED T_NULL T_BOOLEAN T_BOOL T_NUMBER T_STRING T_HASH */
+/*globals equal notEqual typeOf T_OBJECT T_FUNCTION T_UNDEFINED T_NULL T_BOOLEAN T_BOOL T_NUMBER T_STRING T_HASH T_CLASS T_ARRAY plan */
 
-"import core_test:index";
-"import core";
+// NOTE: Expect 7 errors from JSLint. We are doing some bad things here on 
+// purpose to test typeOf()
+
+"import package core_test";
+"import utils";
 
 module("typeOf");
 
