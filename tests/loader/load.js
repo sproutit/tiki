@@ -2,16 +2,17 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals core equal plan Loader setup teardown equal plan */
+/*globals core equal plan MODULE setup teardown equal plan raises */
 
-"import core_test tiki shouldThrow";
+"import package core_test";
+"import loader as MODULE";
 
 var loader, factoryFunc, factoryStr, packageFunc ;
 
 module("Loader.canonical");
 
 setup(function() {
-  loader = new Loader('test');
+  loader = new MODULE.Loader('test');
   loader.register('app', {});
   
   factoryFunc = function() {};
@@ -52,7 +53,7 @@ test("loading a string based factory", function() {
 });
 
 test("loading an unknown module", function() {
-  shouldThrow(function() {
+  raises(function() {
     loader.load('unknown:module');
   }, true, 'load(unknown:module)');
 });

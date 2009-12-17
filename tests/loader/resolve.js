@@ -2,16 +2,17 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals core equal plan Loader setup teardown equal plan */
+/*globals core equal plan MODULE setup teardown equal plan raises */
 
-"import core_test tiki";
+"import package core_test";
+"import loader as MODULE";
 
 var loader ;
 
 module("Loader.resolve");
 
 setup(function() {
-  loader = new Loader('test');
+  loader = new MODULE.Loader('test');
 });
 
 teardown(function() {
@@ -32,8 +33,8 @@ test("resolving absolute module name", function() {
   equal(loader.resolve('foo'), 'foo', 
     'resolve(foo) [no baseId] should return foo');
   
-  equal(loader.resolve('foo/bar', 'baz:biff/bar'), 'baz:foo/bar', 
-    'resolve(foo/bar, baz:biff/bar) should remap to baz packageId');
+  equal(loader.resolve('foo/bar', 'baz:biff/bar'), 'foo/bar', 
+    'resolve(foo/bar, biff/bar) should remap to baz packageId');
 });
 
 test("resolving relative paths", function() {
@@ -52,10 +53,10 @@ test("resolving relative paths", function() {
 });  
 
 test("invalid relative paths", function() {
-  shouldThrow(function() { loader.resolve('./foo/bar') }, true, 
+  raises(function() { loader.resolve('./foo/bar'); }, true, 
     'trying to resolve a relative path without a baseId');
 
-  shouldThrow(function() { loader.resolve('../../foo/bar', 'baz:biff/bar') },
+  raises(function() { loader.resolve('../../foo/bar', 'baz:biff/bar'); },
     true, 'trying to go up beyond top level of package');
 });
 

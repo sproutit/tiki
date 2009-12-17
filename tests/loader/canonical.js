@@ -5,15 +5,16 @@
 /*globals core equal plan Loader setup teardown equal plan */
 
 "import package core_test";
+"import loader as LOADER";
 
 var loader ;
-
-console.log('RUNNING!');
 
 module("Loader.canonical");
 
 setup(function() {
-  loader = new Loader('test');
+  
+  console.log('RUND');
+  loader = new LOADER.Loader('test');
   loader.register('app', {});
   loader.module('app:core', function() {});
   loader.module('app:system', function() {});
@@ -40,9 +41,7 @@ teardown(function() {
 // 
 
 test("fully qualified id - known IDs", function() {
-  
-  console.log('RUN');
-  
+    
   equal(loader.canonical('app:core'), 'app:core', 
     'canonical(app:code) should return same id');
     

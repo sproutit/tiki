@@ -3,7 +3,7 @@
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
 /*globals tiki ENV ARGV */
-
+ 
 "use modules false";
 "use loader false";
 
@@ -88,10 +88,11 @@ if ("undefined" === typeof tiki) { var tiki = function() {
       
       if (!ret) {
         ret = modules[moduleId] = {} ;
-        info = { id: moduleId };
+        info = { id: moduleId, exports: ret };
         factory = factories[moduleId];
         if (typeof factory !== 'function') throw(moduleId+" is not function");
         factory.call(ret, tiki.require, ret, info);
+        if (info.exports !== ret) ret = modules[moduleId] = info.exports;
       }
        
       return ret ;
