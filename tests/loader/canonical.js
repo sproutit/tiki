@@ -5,16 +5,14 @@
 /*globals core equal plan Loader setup teardown equal plan */
 
 "import package core_test";
-"import loader as LOADER";
-
+var Loader = require('loader');
 var loader ;
 
 module("Loader.canonical");
 
 setup(function() {
   
-  console.log('RUND');
-  loader = new LOADER.Loader('test');
+  loader = new Loader('test');
   loader.register('app', {});
   loader.module('app:core', function() {});
   loader.module('app:system', function() {});

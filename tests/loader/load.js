@@ -2,17 +2,17 @@
 // Project:   Tiki
 // Copyright: ©2009 Apple Inc.
 // ==========================================================================
-/*globals core equal plan MODULE setup teardown equal plan raises */
+/*globals core equal plan setup teardown equal plan raises */
 
 "import package core_test";
-"import loader as MODULE";
+var Loader = require('loader');
 
 var loader, factoryFunc, factoryStr, packageFunc ;
 
 module("Loader.canonical");
 
 setup(function() {
-  loader = new MODULE.Loader('test');
+  loader = new Loader('test');
   loader.register('app', {});
   
   factoryFunc = function() {};

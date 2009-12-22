@@ -84,16 +84,17 @@ if ("undefined" === typeof tiki) { var tiki = function() {
     require: function(moduleId) {
       var ret, factory, info, idx, packagePart, modulePart ;
 
+      if (moduleId.indexOf(':')<0) moduleId = 'tiki:' + moduleId;
       ret = modules[moduleId];
       
       if (!ret) {
-        ret = modules[moduleId] = {} ;
-        info = { id: moduleId, exports: ret };
+        ret = {} ;
+        info = modules[moduleId] = { id: moduleId, exports: ret };
         factory = factories[moduleId];
         if (typeof factory !== 'function') throw(moduleId+" is not function");
         factory.call(ret, tiki.require, ret, info);
-        if (info.exports !== ret) ret = modules[moduleId] = info.exports;
-      }
+        ret = info.exports ; // WARNING: we don't detect cyclical refs here
+      } else ret = ret.exports ; 
        
       return ret ;
     },
@@ -114,5 +115,5 @@ if ("undefined" === typeof tiki) { var tiki = function() {
   
   return tiki;
   
-}(); };
+}(); }
 
