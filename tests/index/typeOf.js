@@ -8,7 +8,7 @@
 // purpose to test typeOf()
 
 "import package core_test";
-"import utils";
+"import index";
 
 module("typeOf");
 

@@ -1,10 +1,9 @@
 // ========================================================================
-// utils.beget Tests
+// tiki.beget Tests
 // ========================================================================
-/*globals utils notEqual equal raises plan */
+/*globals notEqual equal raises plan */
 
 "import package core_test";
-"import utils as utils";
 
 var objectA, objectB , arrayA, stringA; // global variables
 
@@ -14,7 +13,7 @@ test("basic object", function() {
   
   var obj = { foo: 'bar' }, str = "string", ary = [];
   
-  var begotton = utils.beget(obj);
+  var begotton = tiki.beget(obj);
   notEqual(begotton, obj, 'beget(obj) should be new instance');
   equal(begotton.foo, 'bar', 'should inherit property from parent');
   
@@ -24,13 +23,13 @@ test("basic object", function() {
 
 test("non object types", function() {
   
-  equal(utils.beget(2), 2, 'beget(Number)');
-  equal(utils.beget('string'), 'string', 'beget(String)');
-  equal(utils.beget(true), true, 'beget(Boolean)');
+  equal(tiki.beget(2), 2, 'beget(Number)');
+  equal(tiki.beget('string'), 'string', 'beget(String)');
+  equal(tiki.beget(true), true, 'beget(Boolean)');
 
   // array is intentionally untested.  We want beget() to be fast even if 
   // beget([]) is undefined results
-  // utils.beget([]);
+  // tiki.beget([]);
 });
 
 

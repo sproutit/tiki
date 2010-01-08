@@ -92,7 +92,9 @@ if ("undefined" === typeof tiki) { var tiki = function() {
         info = modules[moduleId] = { id: moduleId, exports: ret };
         factory = factories[moduleId];
         if (typeof factory !== 'function') throw(moduleId+" is not function");
-        factory.call(ret, tiki.require, ret, info);
+        
+        var tikiMod = factories['tiki:index'] ? tiki.require('tiki:index') : null;
+        factory.call(ret, tiki.require, ret, info, tikiMod);
         ret = info.exports ; // WARNING: we don't detect cyclical refs here
       } else ret = ret.exports ; 
        

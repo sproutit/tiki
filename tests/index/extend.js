@@ -1,20 +1,19 @@
 // ========================================================================
-// utils.extend Tests
+// tiki.extend Tests
 // ========================================================================
-/*globals utils notEqual equal raises plan setup teardown */
+/*globals notEqual equal raises plan setup teardown */
 
 "import package core_test";
-"import utils as utils";
 
 var a, b, c ;
 
-module("utils.extend()");
+module("tiki.extend()");
 
 test("building a basic object", function() {
   
-  var Const = utils.extend({ foo: 'bar' });
+  var Const = tiki.extend({ foo: 'bar' });
   
-  equal(typeof Const, utils.T_FUNCTION, 'should return a constructor function');
+  equal(typeof Const, tiki.T_FUNCTION, 'should return a constructor function');
   equal(Const.prototype.foo, 'bar', 'Const.prototype should contain passed props');
   
   var c = new Const();
@@ -25,11 +24,11 @@ test("building a basic object", function() {
 
 test("init", function() {
 
-  var ConstInit = utils.extend({ 
+  var ConstInit = tiki.extend({ 
     init: function(bar) { this.foo = bar; }
   });
   
-  var ConstNoInit = utils.extend({});
+  var ConstNoInit = tiki.extend({});
   
   var c = new ConstInit('blah');
   equals(c.foo, 'blah', 'should call init() if defined [init sets c.foo = blah]');
@@ -39,12 +38,12 @@ test("init", function() {
 });
 
 test("extending a constructor", function() {
-  var ConstA = utils.extend({ 
+  var ConstA = tiki.extend({ 
     init: function() { this.foo = 'ConstA'; },
     constA: 'constA'
   });
   
-  var ConstB = utils.extend(ConstA, {
+  var ConstB = tiki.extend(ConstA, {
     init: function() { this.foo = 'ConstB'; },
     constB: 'constB'
   });
@@ -63,7 +62,7 @@ test("extending a constructor", function() {
 
 test("extending a native object", function() {
 
-  var Const = utils.extend(Date, { foo: 'foo' });
+  var Const = tiki.extend(Date, { foo: 'foo' });
   var c = new Const();
   equal(c instanceof Const, true, 'c should be instanceof Const');
   equal(c instanceof Date, true, 'c should also be instance of Date');

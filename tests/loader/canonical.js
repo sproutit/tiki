@@ -32,7 +32,7 @@ setup(function() {
 teardown(function() {
   loader.destroy();
   loader = null ;
-});
+}); 
 
 // ..........................................................
 // BASIC TESTS
