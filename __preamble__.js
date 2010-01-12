@@ -29,10 +29,9 @@ For more information visit http://www.sproutcore.com/tiki
 
 ==========================================================================
 @license */
+
 /*globals tiki ENV ARGV */
 
-
-"require lib/license"; 
 "use modules false";
 "use loader false";
 
