@@ -1,8 +1,8 @@
 // ==========================================================================
-// Project:   Tiki
-// Copyright: ©2009 Apple Inc.
+// Project:   Tiki - CommonJS Runtime
+// Copyright: ©2009-2010 Apple Inc. All rights reserved.
+// License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
-/*globals plan equal */
 
 "import package core_test";
 

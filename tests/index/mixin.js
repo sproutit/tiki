@@ -1,7 +1,9 @@
-// ========================================================================
-// tiki.mixin Tests
-// ========================================================================
-/*globals notEqual equal raises plan setup teardown */
+// ==========================================================================
+// Project:   Tiki - CommonJS Runtime
+// Copyright: ©2009-2010 Apple Inc. All rights reserved.
+// License:   Licened under MIT license (see __preamble__.js)
+// ==========================================================================
+/*globals setup */
 
 "import package core_test";
 

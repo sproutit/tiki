@@ -1,7 +1,9 @@
 // ==========================================================================
-// Project:   Tiki
-// Copyright: ©2009 Apple Inc.
+// Project:   Tiki - CommonJS Runtime
+// Copyright: ©2009-2010 Apple Inc. All rights reserved.
+// License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
+
 /*globals equal notEqual typeOf T_OBJECT T_FUNCTION T_UNDEFINED T_NULL T_BOOLEAN T_BOOL T_NUMBER T_STRING T_HASH T_CLASS T_ARRAY plan */
 
 // NOTE: Expect 7 errors from JSLint. We are doing some bad things here on 
