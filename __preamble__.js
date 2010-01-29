@@ -117,7 +117,7 @@ if ("undefined" === typeof tiki) { var tiki = function() {
       
       if (!ret) {
         ret = {} ;
-        info = modules[moduleId] = { id: moduleId, exports: ret };
+        info = modules[moduleId] = { id: moduleId, exports: ret, boot: this };
         factory = factories[moduleId];
         if (typeof factory !== 'function') throw(moduleId+" is not function");
         
