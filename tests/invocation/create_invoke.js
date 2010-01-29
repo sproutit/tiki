@@ -4,7 +4,7 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-"import package core_test";
+var Ct = require('core_test');
 
 var Invocation = require('invocation');
 var obj, inv;
@@ -13,9 +13,9 @@ var obj, inv;
 // invoke with no arguments
 // 
 
-module("Invocation.create([target], func|methodName)");
+Ct.module("Invocation.create([target], func|methodName)");
 
-setup(function() { 
+Ct.setup(function() { 
   obj = {
     cnt: 0,
     handler: function() { this.cnt++; }
@@ -23,86 +23,86 @@ setup(function() {
   inv = null;
 });
 
-teardown(function() { 
+Ct.teardown(function() { 
   obj = null;
   inv.release();
 });
 
-test("invoke(func)", function() {
+Ct.test("invoke(func)", function(t) {
   var cnt = 0;
   inv = Invocation.create(function() { cnt++; });
   inv.invoke();
-  equal(cnt, 1, 'should have invoked once');
+  t.equal(cnt, 1, 'should have invoked once');
 });
 
-test("invoke(target, func)", function() {
+Ct.test("invoke(target, func)", function(t) {
   inv = Invocation.create(obj, obj.handler);
   inv.invoke();
-  equal(obj.cnt, 1, 'should have invoked once');
+  t.equal(obj.cnt, 1, 'should have invoked once');
 });
 
-test("invoke(target, methodName)", function() {
+Ct.test("invoke(target, methodName)", function(t) {
   inv = Invocation.create(obj, obj.handler);
   inv.invoke();
-  equal(obj.cnt, 1, 'should have invoked once');
+  t.equal(obj.cnt, 1, 'should have invoked once');
 });
 
 // ..........................................................
 // Invoke with arguments
 // 
 
-module('Invocation.create(target, method, args, [ignore, [extra]])');
+Ct.module('Invocation.create(target, method, args, [ignore, [extra]])');
 
-setup(function() {
+Ct.setup(function() {
   obj = {
     cnt: 0,
     handler: function(amt, extra) { this.cnt += (amt+(extra||0)); }
   };
 });
 
-teardown(function() { 
+Ct.teardown(function() { 
   obj = null;
   inv.release();
 });
 
-test("invoke(target, func, args)", function() {
+Ct.test("invoke(target, func, args)", function(t) {
   inv = Invocation.create(obj, obj.handler, [10]);
   inv.invoke();
-  equal(obj.cnt, 10, 'should have invoked once with argument');
+  t.equal(obj.cnt, 10, 'should have invoked once with argument');
 });
 
-test("invoke(target, func, args, ignore)", function() {
+Ct.test("invoke(target, func, args, ignore)", function(t) {
   inv = Invocation.create(obj, obj.handler, [10, 20], 1);
   inv.invoke();
-  equal(obj.cnt, 20, 'should have invoked once with argument');
+  t.equal(obj.cnt, 20, 'should have invoked once with argument');
 });
 
 // ..........................................................
 // Verify use of pool
 // 
 
-module('Invocation.create() should use pool');
-setup(function() {
+Ct.module('Invocation.create() should use pool');
+Ct.setup(function() {
    obj = { handler: function() {} };
 });
 
-test("gets a new object if pool empty", function() {
+Ct.test("gets a new object if pool empty", function(t) {
   var i1 = Invocation.create(obj, obj.handler);
   var i2 = Invocation.create(obj, obj.handler);
-  notEqual(i1, i2, 'new create should not be equal');
+  t.notEqual(i1, i2, 'new create should not be equal');
 });
 
-test("reuses from pool if possible", function() {
+Ct.test("reuses from pool if possible", function(t) {
   
   var i1 = Invocation.create(obj, obj.handler);
   var i1_recycled = i1.recycled;
   i1.release(); // should return to pool
-  equal(i1.isDestroyed, true, 'invocation should be destroyed');
+  t.equal(i1.isDestroyed, true, 'invocation should be destroyed');
   
   var i2 = Invocation.create(obj, obj.handler);
-  equal(i1, i2, 'should return same instance from pool');
-  equal(i2.recycled, i1_recycled+1, 'recycled cound should increment');
-  equal(i2.retainCount, 1, 'retainCount should reset to 1');
+  t.equal(i1, i2, 'should return same instance from pool');
+  t.equal(i2.recycled, i1_recycled+1, 'recycled cound should increment');
+  t.equal(i2.retainCount, 1, 'retainCount should reset to 1');
 });
 
-plan.run();
+Ct.run();

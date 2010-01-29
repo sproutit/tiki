@@ -4,26 +4,26 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-"import package core_test";
+var Ct = require('core_test');
 
 var a, b, c ;
 
-module("tiki.extend()");
+Ct.module("tiki.extend()");
 
-test("building a basic object", function() {
+Ct.test("building a basic object", function(t) {
   
   var Const = tiki.extend({ foo: 'bar' });
   
-  equal(typeof Const, tiki.T_FUNCTION, 'should return a constructor function');
-  equal(Const.prototype.foo, 'bar', 'Const.prototype should contain passed props');
+  t.equal(typeof Const, tiki.T_FUNCTION, 'should return a constructor function');
+  t.equal(Const.prototype.foo, 'bar', 'Const.prototype should contain passed props');
   
   var c = new Const();
-  equal(c instanceof Const, true, 'c should be instanceof Const');
+  t.equal(c instanceof Const, true, 'c should be instanceof Const');
   
-  equal(c.constructor, Const, 'instance.constructor should be Const');
+  t.equal(c.constructor, Const, 'instance.constructor should be Const');
 });
 
-test("init", function() {
+Ct.test("init", function(t) {
 
   var ConstInit = tiki.extend({ 
     init: function(bar) { this.foo = bar; }
@@ -32,13 +32,13 @@ test("init", function() {
   var ConstNoInit = tiki.extend({});
   
   var c = new ConstInit('blah');
-  equals(c.foo, 'blah', 'should call init() if defined [init sets c.foo = blah]');
+  t.equal(c.foo, 'blah', 'should call init() if defined [init sets c.foo = blah]');
   
   c = new ConstNoInit();
-  equals(c instanceof ConstNoInit, true, 'should not raise exception when no init is defined');
+  t.equal(c instanceof ConstNoInit, true, 'should not raise exception when no init is defined');
 });
 
-test("extending a constructor", function() {
+Ct.test("extending a constructor", function(t) {
   var ConstA = tiki.extend({ 
     init: function() { this.foo = 'ConstA'; },
     constA: 'constA'
@@ -50,25 +50,25 @@ test("extending a constructor", function() {
   });
 
   var c = new ConstB();
-  equal(c instanceof ConstB, true, 'c should be instance of ConstB');
-  equal(c instanceof ConstA, true, 'c should also be instance of ConstA');
-  equal(c.constructor, ConstB, 'c.constructor should be ConstB');
+  t.equal(c instanceof ConstB, true, 'c should be instance of ConstB');
+  t.equal(c instanceof ConstA, true, 'c should also be instance of ConstA');
+  t.equal(c.constructor, ConstB, 'c.constructor should be ConstB');
   
-  equal(c.constB, 'constB', 'should have property constB defined on constB');
-  equal(c.constA, 'constA', 'should have property constA inherited from constA');
+  t.equal(c.constB, 'constB', 'should have property constB defined on constB');
+  t.equal(c.constA, 'constA', 'should have property constA inherited from constA');
   
-  equal(c.foo, 'ConstB', 'should overwrite init() from ConstB');
+  t.equal(c.foo, 'ConstB', 'should overwrite init() from ConstB');
   
 });
 
-test("extending a native object", function() {
+Ct.test("extending a native object", function(t) {
 
   var Const = tiki.extend(Date, { foo: 'foo' });
   var c = new Const();
-  equal(c instanceof Const, true, 'c should be instanceof Const');
-  equal(c instanceof Date, true, 'c should also be instance of Date');
-  equal(c.getTime, Date.prototype.getTime, 'c.getTime should inherit from Date.prototype.getTime()');
+  t.equal(c instanceof Const, true, 'c should be instanceof Const');
+  t.equal(c instanceof Date, true, 'c should also be instance of Date');
+  t.equal(c.getTime, Date.prototype.getTime, 'c.getTime should inherit from Date.prototype.getTime()');
   
 });
 
-plan.run();
+Ct.run();

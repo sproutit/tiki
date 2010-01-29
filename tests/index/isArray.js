@@ -4,26 +4,26 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-"import package core_test";
+var Ct = require('core_test');
 
 var YES = tiki.YES, NO = tiki.NO ;
 
-module("isArray");
+Ct.module("isArray");
 
-test("basic types", function() {
-  equal(tiki.isArray([]), YES, 'isArray([])');
-  equal(tiki.isArray(null), NO, 'isArray(null)');
-  equal(tiki.isArray(undefined), NO, 'isArray(undefined)');
-  equal(tiki.isArray(23), NO, 'isArray(23)');
-  equal(tiki.isArray('str'), NO, 'isArray("str")');
-  equal(tiki.isArray({}), NO, 'isArray({})');
-  equal(tiki.isArray(function() {}), NO, 'isArray(Function)');
+Ct.test("basic types", function(t) {
+  t.equal(tiki.isArray([]), YES, 'isArray([])');
+  t.equal(tiki.isArray(null), NO, 'isArray(null)');
+  t.equal(tiki.isArray(undefined), NO, 'isArray(undefined)');
+  t.equal(tiki.isArray(23), NO, 'isArray(23)');
+  t.equal(tiki.isArray('str'), NO, 'isArray("str")');
+  t.equal(tiki.isArray({}), NO, 'isArray({})');
+  t.equal(tiki.isArray(function() {}), NO, 'isArray(Function)');
 });
 
-test("array-like objects", function() {
-  equal(tiki.isArray({ isArray: YES }), YES, 'isArray({ isArray: YES })');
-  equal(tiki.isArray(arguments), YES, 'isArray(arguments)');
+Ct.test("array-like objects", function(t) {
+  t.equal(tiki.isArray({ isArray: YES }), YES, 'isArray({ isArray: YES })');
+  t.equal(tiki.isArray(arguments), YES, 'isArray(arguments)');
 });
 
-plan.run();
+Ct.run();
  

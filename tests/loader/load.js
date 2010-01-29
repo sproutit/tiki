@@ -4,14 +4,14 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-"import package core_test";
+var Ct = require('core_test');
 var Loader = require('loader');
 
 var loader, factoryFunc, factoryStr, packageFunc ;
 
-module("Loader.canonical");
+Ct.module("Loader.load");
 
-setup(function() {
+Ct.setup(function() {
   loader = new Loader('test');
   loader.register('app', {});
   
@@ -25,7 +25,7 @@ setup(function() {
   loader.module('app:index', packageFunc);
 });
 
-teardown(function() {
+Ct.teardown(function() {
   loader.destroy();
   loader = null ;
 });
@@ -34,37 +34,37 @@ teardown(function() {
 // BASIC TESTS
 // 
 
-test("loading a basic factory", function() {
+Ct.test("loading a basic factory", function(t) {
   var func = loader.load('app:func');
-  equal(func, factoryFunc, 'load(app:func) should return factory function');
+  t.equal(func, factoryFunc, 'load(app:func) should return factory function');
   
   var func2 = loader.load('app:func');
-  equals(func2, func, 'each call should return same factory');
+  t.equal(func2, func, 'each call should return same factory');
 });
 
-test("loading a string based factory", function() {
+Ct.test("loading a string based factory", function(t) {
   var fn = loader.load('app:str');
-  ok(typeof fn, 'function', 
+  t.ok(typeof fn, 'function', 
     'returned value should be a factory function - actual: '+(typeof fn));
-  equal(fn(), 'Hello World!', 'invoking function should execute string');
+  t.equal(fn(), 'Hello World!', 'invoking function should execute string');
   
   var fn2 = loader.load('app:str');
-  equals(fn2, fn, 'each call should return same factory');
+  t.equal(fn2, fn, 'each call should return same factory');
 });
 
-test("loading an unknown module", function() {
-  raises(function() {
+Ct.test("loading an unknown module", function(t) {
+  t.throws(function() {
     loader.load('unknown:module');
-  }, true, 'load(unknown:module)');
+  }, 'load(unknown:module)');
 });
 
-test("loading a package name", function() {
+Ct.test("loading a package name", function(t) {
   var fn = loader.load('app');
-  equal(fn, packageFunc, 'should return factory for package');
+  t.equal(fn, packageFunc, 'should return factory for package');
 });
 
 // ..........................................................
 // ADD SPECIAL CASES HERE
 // 
 
-plan.run();
+Ct.run();

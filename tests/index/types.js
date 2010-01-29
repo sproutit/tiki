@@ -4,28 +4,28 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-"import package core_test";
+var Ct = require('core_test');
 
-module("tiki exported types");
+Ct.module("tiki exported types");
 
-test("T_FOO types", function() {
-  equal(!!tiki.T_ERROR, true, 'should defined T_ERROR');
-  equal(!!tiki.T_OBJECT, true, 'should defined T_OBJECT');
-  equal(!!tiki.T_NULL, true, 'should defined T_NULL');
-  equal(!!tiki.T_CLASS, true, 'should defined T_CLASS');
-  equal(!!tiki.T_HASH, true, 'should defined T_HASH');
-  equal(!!tiki.T_FUNCTION, true, 'should defined T_FUNCTION');
-  equal(!!tiki.T_UNDEFINED, true, 'should defined T_UNDEFINED');
-  equal(!!tiki.T_NUMBER, true, 'should defined T_NUMBER');
-  equal(!!tiki.T_BOOL, true, 'should defined T_BOOL');
-  equal(!!tiki.T_ARRAY, true, 'should defined T_ARRAY');
-  equal(!!tiki.T_STRING, true, 'should defined T_STRING');
-  equal(!!tiki.T_BOOLEAN, true, 'should defined T_BOOLEAN');
+Ct.test("T_FOO types", function(t) {
+  t.equal(!!tiki.T_ERROR, true, 'should defined T_ERROR');
+  t.equal(!!tiki.T_OBJECT, true, 'should defined T_OBJECT');
+  t.equal(!!tiki.T_NULL, true, 'should defined T_NULL');
+  t.equal(!!tiki.T_CLASS, true, 'should defined T_CLASS');
+  t.equal(!!tiki.T_HASH, true, 'should defined T_HASH');
+  t.equal(!!tiki.T_FUNCTION, true, 'should defined T_FUNCTION');
+  t.equal(!!tiki.T_UNDEFINED, true, 'should defined T_UNDEFINED');
+  t.equal(!!tiki.T_NUMBER, true, 'should defined T_NUMBER');
+  t.equal(!!tiki.T_BOOL, true, 'should defined T_BOOL');
+  t.equal(!!tiki.T_ARRAY, true, 'should defined T_ARRAY');
+  t.equal(!!tiki.T_STRING, true, 'should defined T_STRING');
+  t.equal(!!tiki.T_BOOLEAN, true, 'should defined T_BOOLEAN');
 });
 
-test("YES and NO", function() {
-  equal(tiki.YES, true, 'should define tiki.YES == true');
-  equal(tiki.NO, false, 'should defined tiki.NO == false');
+Ct.test("YES and NO", function(t) {
+  t.equal(tiki.YES, true, 'should define tiki.YES == true');
+  t.equal(tiki.NO, false, 'should defined tiki.NO == false');
 });
 
-plan.run();
+Ct.run();

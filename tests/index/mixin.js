@@ -5,43 +5,43 @@
 // ==========================================================================
 /*globals setup */
 
-"import package core_test";
+var Ct = require('core_test');
 
 var a, b, c ;
 
-module("tiki.mixin()");
+Ct.module("tiki.mixin()");
 
-setup(function() {
+Ct.setup(function() {
   a = { foo: 'a', bar: 'a', baz: 'a' };
   b = { foo: 'b' };
   c = { bar: 'c' };
 });
 
-test("mixin(a,b) [passing one extra hash]", function() {
+Ct.test("mixin(a,b) [passing one extra hash]", function(t) {
   tiki.mixin(a, b);
-  equal(a.foo, b.foo, 'should copy b property onto a');
-  equal(a.bar, 'a', 'should not overwrite properties not defined on b');
+  t.equal(a.foo, b.foo, 'should copy b property onto a');
+  t.equal(a.bar, 'a', 'should not overwrite properties not defined on b');
 });
 
-test("mixin(a,b,c) [passing multiple hashes]", function() {
+Ct.test("mixin(a,b,c) [passing multiple hashes]", function(t) {
   tiki.mixin(a, b, c);
-  equal(a.foo, b.foo, 'should copy b property onto a');
-  equal(a.bar, c.bar, 'should copy c property onto a also');
+  t.equal(a.foo, b.foo, 'should copy b property onto a');
+  t.equal(a.bar, c.bar, 'should copy c property onto a also');
 });
 
-test("mixin(a, null, b) [passing null]", function() {
+Ct.test("mixin(a, null, b) [passing null]", function(t) {
   tiki.mixin(a, null, b);
-  equal(a.foo, b.foo, 'should copy b property onto a');
-  equal(a.bar, 'a', 'should not overwrite properties not defined on b');
+  t.equal(a.foo, b.foo, 'should copy b property onto a');
+  t.equal(a.bar, 'a', 'should not overwrite properties not defined on b');
 });
 
-test("mixin(a) [passing no hashes]", function() {
+Ct.test("mixin(a) [passing no hashes]", function(t) {
   tiki.mixin(a);
-  equal(a.foo, 'a', 'should not change anything');
+  t.equal(a.foo, 'a', 'should not change anything');
 });
 
 // ..........................................................
 // SPECIAL CASES
 // 
 
-plan.run();
+Ct.run();

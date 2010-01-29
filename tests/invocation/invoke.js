@@ -4,7 +4,7 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-"import package core_test";
+var Ct = require('core_test');
 
 var Invocation = require('invocation');
 var obj;
@@ -13,63 +13,63 @@ var obj;
 // invoke with no arguments
 // 
 
-module("Invocation.invoke([target], func|methodName)");
+Ct.module("Invocation.invoke([target], func|methodName)");
 
-setup(function() { 
+Ct.setup(function() { 
   obj = {
     cnt: 0,
     handler: function() { this.cnt++; }
   } ;
 });
 
-teardown(function() { 
+Ct.teardown(function() { 
   obj = null;
 });
 
-test("invoke(func)", function() {
+Ct.test("invoke(func)", function(t) {
   var cnt = 0;
   Invocation.invoke(function() { cnt++; });
-  equal(cnt, 1, 'should have invoked once');
+  t.equal(cnt, 1, 'should have invoked once');
 });
 
-test("invoke(target, func)", function() {
+Ct.test("invoke(target, func)", function(t) {
   Invocation.invoke(obj, obj.handler);
-  equal(obj.cnt, 1, 'should have invoked once');
+  t.equal(obj.cnt, 1, 'should have invoked once');
 });
 
-test("invoke(target, methodName)", function() {
+Ct.test("invoke(target, methodName)", function(t) {
   Invocation.invoke(obj, obj.handler);
-  equal(obj.cnt, 1, 'should have invoked once');
+  t.equal(obj.cnt, 1, 'should have invoked once');
 });
 
 // ..........................................................
 // Invoke with arguments
 // 
 
-module('Invocation.invoke(target, method, args, [ignore, [extra]])');
+Ct.module('Invocation.invoke(target, method, args, [ignore, [extra]])');
 
-setup(function() {
+Ct.setup(function() {
   obj = {
     cnt: 0,
     handler: function(amt, extra) { this.cnt += (amt+(extra||0)); }
   };
 });
 
-teardown(function() { obj = null; });
+Ct.teardown(function() { obj = null; });
 
-test("invoke(target, func, args)", function() {
+Ct.test("invoke(target, func, args)", function(t) {
   Invocation.invoke(obj, obj.handler, [10]);
-  equal(obj.cnt, 10, 'should have invoked once with argument');
+  t.equal(obj.cnt, 10, 'should have invoked once with argument');
 });
 
-test("invoke(target, func, args, ignore)", function() {
+Ct.test("invoke(target, func, args, ignore)", function(t) {
   Invocation.invoke(obj, obj.handler, [10, 20], 1);
-  equal(obj.cnt, 20, 'should have invoked once with argument');
+  t.equal(obj.cnt, 20, 'should have invoked once with argument');
 });
 
-test("invoke(target, func, args, ignore, extra)", function() {
+Ct.test("invoke(target, func, args, ignore, extra)", function(t) {
   Invocation.invoke(obj, obj.handler, [10, 20], 1, [30]);
-  equal(obj.cnt, 50, 'should have invoked once with argument and extra');
+  t.equal(obj.cnt, 50, 'should have invoked once with argument and extra');
 });
 
-plan.run();
+Ct.run();
