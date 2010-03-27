@@ -5,7 +5,7 @@
 // ==========================================================================
 /*global process path sys t libDir */
 
-var semver = require('tiki:semver');
+var semver = require('tiki:core').semver;
 var Ct = require('core_test:sync');
 
 Ct.module('semver - basics');
