@@ -30,7 +30,7 @@ For more information visit http://www.sproutcore.com/tiki
 ==========================================================================
 @license */
 
-/*globals tiki ENV ARGV */
+/*globals tiki ENV ARGV ARGS */
 
 "use modules false";
 "use loader false";
@@ -47,11 +47,9 @@ For more information visit http://www.sproutcore.com/tiki
 */
 if ("undefined" === typeof tiki) { var tiki = function() {
   
-  var UNDEFINED = 'undefined',
-      queue = [],
-      factories = {}, // temporary store of modules
-      modules = {};
-  
+  var T_UNDEFINED = 'undefined',
+      queue = [];
+        
   // save a registration method in a queue to be replayed later once the 
   // real loader is available.
   function _record(method, args) {
@@ -59,9 +57,6 @@ if ("undefined" === typeof tiki) { var tiki = function() {
   }
   
   var tiki = {
-    
-    _modules: modules,
-    _factories: factories,
     
     // used to detect when real loader should replace this one
     isBootstrap: true,
@@ -74,10 +69,10 @@ if ("undefined" === typeof tiki) { var tiki = function() {
       
       // this hack will make unit tests work for tiki by adding core_test to
       // the list of dependencies.
-      if ((packageId === 'tiki') && (UNDEFINED !== typeof ENV)) {
-        if ((ENV.app === 'tiki') && (ENV.mode === 'test')) {
-          if (!opts.depends) opts.depends = [];
-          opts.depends.push('core_test');
+      if (packageId.match(/^tiki/) && this.ENV) {
+        if ((this.ENV.app === 'tiki') && (this.ENV.mode === 'test')) {
+          if (!opts.dependencies) opts.dependencies = {};
+          opts.dependencies['core_test'] = '~';
         }
       }
       
@@ -85,63 +80,38 @@ if ("undefined" === typeof tiki) { var tiki = function() {
        return this;  
     },
     
-    script:   function() { 
-      _record('script', arguments); 
-      return this; 
-    },
-    
-    stylesheet: function() { 
-      _record('stylesheet', arguments); 
-      return this; 
-    },
+    // Keep these around just in case we need them in the end...
+    // script:   function() { 
+    //   _record('script', arguments); 
+    //   return this; 
+    // },
+    // 
+    // stylesheet: function() { 
+    //   _record('stylesheet', arguments); 
+    //   return this; 
+    // },
 
     // modules actually get saved as well a recorded so you can use them.
     module: function(moduleId, factory) {
-      factories[moduleId] = factory;
+      if (moduleId.match(/\:tiki$/)) this.tikiFactory = factory;
       _record('module', arguments);
       return this ;
     },
 
-    // require just instantiates the module if needed.  This allows registered
-    // modules to be used during bootstrap.  Note that you can only 
-    // instantiate modules that register with a real factory function.  
-    //
-    // use the directive "use factory_format function" in your file to turn 
-    // this on.
-    //
-    require: function(moduleId) {
-      var ret, factory, info, idx, packagePart, modulePart ;
-
-      if (moduleId.indexOf(':')<0) moduleId = 'tiki:' + moduleId;
-      ret = modules[moduleId];
-      
-      if (!ret) {
-        ret = {} ;
-        info = modules[moduleId] = { id: moduleId, exports: ret, boot: this };
-        factory = factories[moduleId];
-        if (typeof factory !== 'function') throw(moduleId+" is not function");
-        
-        var tikiMod = factories['tiki:index'] ? tiki.require('tiki:index') : null;
-        factory.call(ret, tiki.require, ret, info, tikiMod);
-        ret = info.exports ; // WARNING: we don't detect cyclical refs here
-      } else ret = ret.exports ; 
-       
+    // load the tikiFactory 
+    start: function() {
+      var exp = {}, ret;
+      this.tikiFactory(null, exp, null); // no require or module!
+      ret = exp.Browser.start(this.ENV, this.ARGS, queue);
+      queue = null;
       return ret ;
-    },
-    
-    // cleanup the bootstrap loader when finished
-    destroy: function() {
-      if (this.isDestroyed) return this;  // nothing to do
-      this.isDestroyed = true;
-      modules = factories = queue = this.queue = null ;
-      return this ;
     }
     
   };
   
-  tiki.require.loader = tiki;
-  tiki.ENV = (typeof ENV !== UNDEFINED) ? ENV : undefined;
-  tiki.ARGV = (typeof ARGV !== UNDEFINED) ? ARGV : undefined;
+  if (T_UNDEFINED !== typeof ENV) tiki.ENV = ENV;
+  if (T_UNDEFINED !== typeof ARGV) tiki.ARGS = ARGV; // for older versions
+  if (T_UNDEFINED !== typeof ARGS) tiki.ARGS = ARGS;
   
   return tiki;
   
