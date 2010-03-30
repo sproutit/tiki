@@ -5,7 +5,7 @@
 // ==========================================================================
 /*global process path sys t libDir */
 
-var tiki = require('tiki:core');
+var tiki = require('tiki:tiki');
 var Ct = require('core_test:sync');
 
 Ct.module('creating');

@@ -5,7 +5,7 @@
 // ==========================================================================
 /*global process path sys t libDir */
 
-var semver = require('tiki:core').semver;
+var semver = require('tiki:tiki').semver;
 var Ct = require('core_test:sync');
 
 Ct.module('semver - basics');
@@ -66,6 +66,15 @@ Ct.test('semver.compare()', function(t) {
   t.equal(semver.compare('1.0.0beta20.1', '1.0.0'), -1);
 
   t.equal(semver.compare('1.0.0beta1.9', '1.0.0beta100'), -1);
+  
+  // ~ or '' means latest.  real number is always newer.
+  t.equal(semver.compare('~', '~'),  0); 
+  t.equal(semver.compare('2.0.1', '~'),  1); 
+  t.equal(semver.compare('~', '2.0.1'), -1);
+  
+  t.equal(semver.compare(null, null),  0);
+  t.equal(semver.compare('2.0.1', null), 1);
+  t.equal(semver.compare(null, '2.0.1'),  -1);
 });
 
 Ct.test('semver.compatible()', function(t) {
@@ -76,6 +85,9 @@ Ct.test('semver.compatible()', function(t) {
   t.equal(semver.compatible('1.0.0', '1.5.2beta3'), true);
   t.equal(semver.compatible('1.0.0', '1.99.99'), true);
   t.equal(semver.compatible('1.0.0', '2.0.0'), false);
+
+  t.equal(semver.compatible('2.0.1', '~'), true); // '~' means latest
+  t.equal(semver.compatible('~', '2.0.1'), true); // '~' means latest
 });
 
 

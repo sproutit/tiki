@@ -4,14 +4,14 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var tiki = require('tiki:core'),
+var tiki = require('tiki:tiki'),
     Ct   = require('core_test:sync'),
 
-    mocks = require('../../mocks'),
+    mocks = require('..//mocks'),
     MockPackage = mocks.MockPackage, 
     MockSource = mocks.MockSource;
     
-Ct.module('Sandbox#require');
+Ct.module('Sandbox#module');
 
 Ct.setup(function(t) {
   
@@ -38,31 +38,33 @@ Ct.teardown(function(t) {
   while(--loc>=0) delete t[k[loc]];
 });
 
-Ct.test('basic exports', function(t) {
-  var exp = t.sandbox.require('foo/bar', 'foo', t.fooPkg);
-  t.ok(exp, 'should return exports');
-  t.equal(exp.moduleId, 'foo/bar', 'exp.moduleId');
+Ct.test('basic module instance', function(t) {
+  
+  var mod = t.sandbox.module('foo/bar', 'foo', t.fooPkg);
+  t.ok(mod, 'should return module');
+  t.equal(mod.id, 'foo/bar', 'module.id');
+  t.equal(mod.ownerPackage, t.fooPkg, 'module.ownerPackage');
+  t.ok(mod.resource, 'should have a resource function');
 });
 
-Ct.test('non existant exports', function(t) {
+Ct.test('non existant module', function(t) {
   t.throws(function() {
-    t.sandbox.require('foo/imaginary', 'foo', t.fooPkg);
+    t.sandbox.module('foo/imaginary', 'foo', t.fooPkg);
   });
 });
 
 Ct.test('multiple calls should return same instance', function(t) {
   var mod1, mod2, mod3;
   
-  mod1 = t.sandbox.require('baz:foo/bar', 'foo/bar', t.fooPkg);
+  mod1 = t.sandbox.module('baz:foo/bar', 'foo/bar', t.fooPkg);
   t.ok(mod1, 'should return module');
-  t.ok(mod1.moduleId, 'foo/bar', 'moduleId');
   
   // same mod -- different starting point
-  mod2 = t.sandbox.require('foo/bar', 'foo', t.bazPkg);
+  mod2 = t.sandbox.module('foo/bar', 'foo', t.bazPkg);
   t.strictEqual(mod2, mod1, 'should be same instance');
   
   // relative paths..
-  mod3 = t.sandbox.require('../foo/bar', 'foo/baz', t.bazPkg);
+  mod3 = t.sandbox.module('../foo/bar', 'foo/baz', t.bazPkg);
   t.strictEqual(mod3, mod1, 'should be same instance');
   
 });
@@ -70,20 +72,19 @@ Ct.test('multiple calls should return same instance', function(t) {
 Ct.test('test param normalization', function(t) {
   var mod1, mod2;
   
-  mod1 = t.sandbox.require('::foo/2.0.0:foo/bar');
+  mod1 = t.sandbox.module('::foo/2.0.0:foo/bar');
   t.ok(mod1);
-  t.ok(mod1.moduleId, 'foo/bar', 'moduleId');
   
-  mod2 = t.sandbox.require('foo:foo/bar');
+  mod2 = t.sandbox.module('foo:foo/bar');
   t.strictEqual(mod2, mod1, 'foo:foo/bar');
 
-  mod2 = t.sandbox.require('foo/bar', null, t.fooPkg);
+  mod2 = t.sandbox.module('foo/bar', null, t.fooPkg);
   t.strictEqual(mod2, mod1, 'foo/bar, null, fooPkg');
 
-  mod2 = t.sandbox.require('foo/bar', t.fooPkg);
+  mod2 = t.sandbox.module('foo/bar', t.fooPkg);
   t.strictEqual(mod2, mod1, 'foo/bar, fooPkg');
 
-  mod2 = t.sandbox.require('./bar', 'foo/baz', t.fooPkg);
+  mod2 = t.sandbox.module('./bar', 'foo/baz', t.fooPkg);
   t.strictEqual(mod2, mod1, './bar, foo/bar, fooPkg');
   
 });

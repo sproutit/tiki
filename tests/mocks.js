@@ -11,7 +11,7 @@
   specific tiki parts.
 */
 
-var tiki = require('tiki:core'),
+var tiki = require('tiki:tiki'),
     MockPackage, MockSource;
 
 // ..........................................................

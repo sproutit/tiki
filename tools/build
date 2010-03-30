@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+# This is a very simple build tool to construct a tiki.js file from the 
+# tiki source.  To run this script just invoke it from the command line.
+# By default it will output the built file to tmp/tiki.js in the tiki
+# directory.
+
+require 'fileutils'
+
+TIKI_VERSION   = '1.0.0'
+BASE_DIR  = File.expand_path(File.join(__FILE__, '..', '..'))
+IN_PATH   = File.join BASE_DIR, 'lib', 'tiki.js' 
+OUT_PATH  = File.join BASE_DIR, 'tmp', 'tiki.js'
+
+preamble  = File.read(File.join(BASE_DIR, '__preamble__.js'))
+postamble = File.read(File.join(BASE_DIR, '__postamble__.js'))
+body = File.read(IN_PATH)
+package_id = "::tiki/#{TIKI_VERSION}"
+
+output = <<EOF
+#{preamble}
+tiki.register('#{package_id}', { 
+  "name": "tiki",
+  "version": "#{TIKI_VERSION}",
+});
+
+tiki.module('#{package_id}:tiki', function(require, exports, module) {
+#{body}
+});
+#{postamble}
+EOF
+
+FileUtils.mkdir_p File.dirname(OUT_PATH)
+fp = File.open OUT_PATH, 'w+'
+fp.write output
+fp.close
+

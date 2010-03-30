@@ -4,7 +4,7 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var tiki = require('tiki:core');
+var tiki = require('tiki:tiki');
 var Ct = require('core_test:sync');
 
 // ..........................................................
