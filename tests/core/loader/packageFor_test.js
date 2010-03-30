@@ -48,106 +48,82 @@ Ct.teardown(function(t, done) {
 
 Ct.test('get package for a resolved canonicalId, no workingPackage', 
 function(t, done) {
+
+  var canonicalId, pkg;
   
-  t.timeout(1000, done);
-  t.expect(5);
-  
-  t.loader.canonicalPackageId('bar', null, function(err, canonicalId) {
-    t.equal(err, null, 'should not return an error');
-    t.equal(canonicalId, '::bar/3.0.0', 'should return an id');
+  canonicalId = t.loader.canonicalPackageId('bar', null);
+  t.equal(canonicalId, '::bar/3.0.0', 'should return an id');
     
-    t.loader.packageFor(canonicalId, function(err, pkg) {
-      t.equal(err, null, 'should not return an error');
-      t.ok(pkg, 'should return a package');
-      t.equal(pkg.id, canonicalId, 'should match canonicalId');
-      done();
-    });
-  });
+  pkg = t.loader.packageFor(canonicalId);
+  t.ok(pkg, 'should return a package');
+  t.equal(pkg.id, canonicalId, 'should match canonicalId');
+  done();
 });
 
 
 Ct.test('get package for a resolved canonicalId, with workingPackage', 
 function(t, done) {
   
-  t.timeout(1000, done);
-  t.expect(5);
+  var canonicalId, pkg;
   
   // should return the version of bar that is compatible with foo (defined
   // in mocks)
-  t.loader.canonicalPackageId('bar', t.fooPkg, function(err, canonicalId) {
-    t.equal(err, null, 'should not return an error');
-    t.equal(canonicalId, '::bar/2.2.23', 'should return an id');
-    
-    t.loader.packageFor(canonicalId, t.fooPkg, function(err, pkg) {
-      t.equal(err, null, 'should not return an error');
-      t.ok(pkg, 'should return a package');
-      t.equal(pkg.id, canonicalId, 'should match canonicalId');
-      done();
-    });
-  });
+  canonicalId = t.loader.canonicalPackageId('bar', t.fooPkg);
+  t.equal(canonicalId, '::bar/2.2.23', 'should return an id');
+  
+  pkg = t.loader.packageFor(canonicalId, t.fooPkg);
+  t.ok(pkg, 'should return a package');
+  t.equal(pkg.id, canonicalId, 'should match canonicalId');
+  done();
 });
 
 
 Ct.test('get package for a resolved canonical moduleId', 
 function(t, done) {
   
-  t.timeout(1000, done);
-  t.expect(5);
+  var canonicalId, pkg;
   
-  t.loader.canonical('bar:foo', null, function(err, canonicalId) {
-    t.equal(err, null, 'should not return an error');
-    t.equal(canonicalId, '::bar/3.0.0:foo', 'should return an id');
+  canonicalId = t.loader.canonical('bar:foo', null);
+  t.equal(canonicalId, '::bar/3.0.0:foo', 'should return an id');
     
-    t.loader.packageFor(canonicalId, function(err, pkg) {
-      t.equal(err, null, 'should not return an error');
-      t.ok(pkg, 'should return a package');
-      t.equal(pkg.id, '::bar/3.0.0', 'should match canonicalId');
-      done();
-    });
-  });
+  pkg = t.loader.packageFor(canonicalId);
+  t.ok(pkg, 'should return a package');
+  t.equal(pkg.id, '::bar/3.0.0', 'should match canonicalId');
+  done();
 });
 
 
 Ct.test('get package for a resolve canonicalId, nested in workingPackage',
 function(t, done) {
-  t.timeout(1000, done);
-  t.expect(5);
+
+  var canonicalId, pkg;
 
   // note: since we are going through a working package, this should 
   // return the nested package version. 
   
   // important: a newer version of 'baz' exists in the parent source, but this
   // should still return the nested version first
-  t.loader.canonicalPackageId('baz', null, t.fooPkg, function(err, canonicalId) {
-    t.equal(err, null, 'should not return an error');
-    t.equal(canonicalId, '::baz/3.0.0', 'should return an id');
-    
-    t.loader.packageFor(canonicalId, t.fooPkg, function(err, pkg) {
-      t.equal(err, null, 'should not return an error');
-      t.ok(pkg, 'should return a package');
-      t.equal(pkg.id, canonicalId, 'should match canonicalId');
-      done();
-    });
-  });
+  canonicalId = t.loader.canonicalPackageId('baz', null, t.fooPkg);
+  t.equal(canonicalId, '::baz/3.0.0', 'should return an id');
   
+  pkg = t.loader.packageFor(canonicalId, t.fooPkg);
+  t.ok(pkg, 'should return a package');
+  t.equal(pkg.id, canonicalId, 'should match canonicalId');
+  done();
 });
 
 Ct.test('get package for unresolved canonicalId', function(t, done) {
 
-  t.timeout(1000, done);
-  t.expect(3);
+  var canonicalId, pkg;
 
   // this shouldn't happen often - but let's say we knew the canonicalId
   // already.  We should just be able to lookup the package.
-  var canonicalId = '::foo/2.0.0';
+  canonicalId = '::foo/2.0.0';
     
-  t.loader.packageFor(canonicalId, t.fooPkg, function(err, pkg) {
-    t.equal(err, null, 'should not return an error');
-    t.ok(pkg, 'should return a package');
-    t.equal(pkg.id, canonicalId, 'should match canonicalId');
-    done();
-  });
-  
+  pkg = t.loader.packageFor(canonicalId, t.fooPkg);
+  t.ok(pkg, 'should return a package');
+  t.equal(pkg.id, canonicalId, 'should match canonicalId');
+  done();
 });
 
 
@@ -156,34 +132,19 @@ Ct.test('get package for unresolved canonicalId', function(t, done) {
 // 
 
 Ct.test("loading a package later should cause it to find", function(t,done) {
-  t.timeout(1000, done);
-  t.expect(5);
+  var pkg;
   
-  // first try to find a package that doesn't exist.  This should create
-  // a cached action
-  (function(next) {
-    t.loader.packageFor('::bar/4.1.2', function(err, pkg) {
-      t.equal(err, null, 'error should be null');
-      t.equal(pkg, null, 'pkg should be null too (not found)');
-      next();
-    });
-    
-  // now that we have tried and the package did not load, simulate loading
-  // the package
-  })(function() {
-    // now simulate loading the package...
-    var bar4 = new MockPackage('bar', '4.1.2');
-    t.mockSource.add(bar4);
+  pkg = t.loader.packageFor('::bar/4.1.2');
+  t.equal(pkg, null, 'pkg should be null too (not found)');
 
-    // try again.
-    t.loader.packageFor('::bar/4.1.2', function(err, pkg) {
-      t.equal(err, null, 'should not have error');
-      t.ok(pkg, 'should have a package');
-      t.equal(pkg.id, '::bar/4.1.2', 'should find a package');
-      done();
-    });
+  // now simulate loading the package...
+  var bar4 = new MockPackage('bar', '4.1.2');
+  t.mockSource.add(bar4);
 
-  });
+  pkg = t.loader.packageFor('::bar/4.1.2');
+  t.ok(pkg, 'should have a package');
+  t.equal(pkg.id, '::bar/4.1.2', 'should find a package');
+  done();
 });
 
 Ct.run();

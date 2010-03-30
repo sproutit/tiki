@@ -21,20 +21,55 @@ brequire.register('sproutcore-datastore/1.2.0/1e3434be4a033941', {
   // load the package.  this is just a external reference.  The actual
   // modules will not be loaded.  If the same package is registers again and
   // external is false (or not found) them it will replace the current one
-  "external": true,
+  "tiki:external": true,
+  
+  // means this package was a nested package inside of another package.  
+  // therefore generic searches should ignore it.  Only those packages that 
+  // specific have this as a dependency will be able to find it
+  "tiki:private": false,
   
   "dependencies": {
-    "tiki": "pkg:tiki/1.0.0/1ea33fe4ab3495bd3",
-    "core_test": "pkg:core_test/2.0.1/beaf1bcea3940583abce",
-    "sproutcore-runtime": "pkg:sproutcore-runtime/1.5.1/cfe8a9384139ba82d"
+    "tiki": "1.0.0",
+    "core_test": "~2.0.1",
+    "sproutcore-runtime": "=1.5.1"
   },
   
-  "base": "http://cdn.sprout.io/st/datastore/en/1234",
+  // canonicalIds for nested packages.  nested packages are seen by this
+  // package only
+  "tiki:nested": {
+    "sproutcore-runtime": "sproutcore-runtime/1.5.1/19348be93ca93f3e"
+  },
+  
+  "tiki:base": "http://cdn.sprout.io/st/datastore/en/1234",
 
-  "resources": [
-    { "id": "stylesheet.css", "type": "stylesheet" },
-    { "id": "javascript.js",  "type": "script" },
-    { "id": "images/foo.jpg", "type": "resource" }
+  "tiki:resources": ["stylesheet.css", "javascript.js", "images/foo.jpg"],
+  
+  "tiki:resources": [
+    {
+      "id":   "stylesheet", 
+      "type": "stylesheet", 
+      "ext":  ".css",
+      "url":  "http://cdn.sprout.io/st/datastore/en/1234/stylesheet.css" 
+    },
+    
+    { 
+      "id":    "::sproutcore-datastore/1.2.0/1e3434be4a033941:javascript",  
+      "name":  "javascript.js",
+      "type":  "script",
+      "url":   "http://cdn.sprout.io/st/datastore/en/1234/javascript.js" 
+    },
+    
+    // this shortcut:
+    "images/foo.png",
+    
+    // expands do:
+    { 
+      "id":   "images/foo", 
+      "type": "resource", // assume resource unless ends in .css or .js 
+      "ext":  ".jpg",
+      "url":  "http://cdn.sprout.io/st/datastore/1234/images/foo.jpg"
+    }
+    
   ]
 
 });
@@ -47,7 +82,7 @@ var asset = {
 };
 
 // module register:
-brequire.define("sproutcore-datastore/1.2.0/1e343be4a0033931:models/record", function(r,x,y,z) {
+brequire.module("sproutcore-datastore/1.2.0/1e343be4a0033931:models/record", function(r,x,y,z) {
   // ... code
 });
 

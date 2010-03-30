@@ -10,15 +10,16 @@ var Ct = require('core_test:sync');
 
 Ct.module('creating');
 
-var mod, pkg;
+var mod, pkg, sandbox;
 
 Ct.setup(function() {
   pkg = new tiki.Package('packageId');
-  mod = new tiki.Module('moduleId', pkg);
+  sandbox = new tiki.Sandbox();
+  mod = new tiki.Module('moduleId', pkg, sandbox);
 });
 
 Ct.teardown(function() {
-  pkg = mod = null;
+  pkg = sandbox = mod = null;
 });
 
 Ct.test('Creating module', function(t) {
@@ -34,8 +35,8 @@ Ct.test('resource() handler', function(t) {
     params = Array.prototype.slice.call(arguments);
   };
   
-  mod.resource('resourceId', done);
-  t.deepEqual(params, ['resourceId', 'moduleId', done], 'should invoke pkg.resource() with name params and moduleId');
+  mod.resource('resourceId');
+  t.deepEqual(params, ['resourceId', 'moduleId'], 'should invoke pkg.resource() with name params and moduleId');
   
 });
 

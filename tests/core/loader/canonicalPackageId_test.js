@@ -16,61 +16,35 @@ var tiki = require('tiki:core'),
 //
 
 
-function testOK(desc, packageId, vers, pkgKey, expected, noCache, next) {
+function testOK(desc, packageId, vers, pkgKey, expected, noCache) {
   desc = desc ? (desc+' ') : 'loader.canonicalPackageId';
   var title = desc+'('+packageId+','+vers+','+pkgKey+')';
 
-  if ('function' === typeof noCache) {
-    next = noCache;
-    noCache = false;
-  }
-
-  if (!next) next = function(t, done) { return done() ; };
-  
   Ct.test(title, function(t, done) {
-    t.expect(noCache ? 2 : 4);
-    t.timeout(1000, done);
+    t.expect(noCache ? 1 : 2);
     
-    var pkg = pkgKey ? t[pkgKey] : null;
-    t.loader.canonicalPackageId(packageId, vers, pkg, function(err, id) {
-      t.equal(err, null, 'err must be null');
-      t.equal(id, expected, 'returned canonicalId');
+    var id1, id2, pkg = pkgKey ? t[pkgKey] : null;
+    id1 = t.loader.canonicalPackageId(packageId, vers, pkg);
+    t.equal(id1, expected, 'returned canonicalId');
       
-      // test again to verify cache unless noCache
-      if (!noCache) {
-        t.loader.canonicalPackageId(packageId, vers, pkg, function(err, id2) {
-          t.equal(err, null, 'err must be null');
-          t.equal(id2, id, 'returned same');
-          return next(t, done);
-        });
-        
-      } else return next(t, done);
-
-    });
+    // test again to verify cache unless noCache
+    if (!noCache) {
+      id2 = t.loader.canonicalPackageId(packageId, vers, pkg);
+      t.equal(id2, id1, 'returned same');
+    }
+    
+    done();
   });
 }
 
-function testError(desc, packageId, vers, pkg, expected, next) {
+function testError(desc, packageId, vers, pkg, expected) {
   var title = "error: "+desc;
-  
-  if ('function' === typeof expected) {
-    next = expected;
-    expected = null;
-  }
-  if (!next) next = function(t, done) { return done() ; };
-  
   Ct.test(title, function(t, done) {
-    t.expect(2);
-    t.timeout(1000, done);
-    t.loader.canonicalPackageId(packageId, vers, pkg, function(err, id) {
-      if (expected !== undefined) {
-        t.equal(err, expected, 'should have error');
-      } else {
-        t.ok(err, 'should have an error');
-      }
-      t.equal(id, null, 'should not return an id');
-      next(t, done);
-    });
+    t.expect(1);
+    t.throws(function() {
+      t.loader.canonicalPackageId(packageId, vers, pkg);
+    }, expected, 'should have error');
+    done();
   });
 }
 
@@ -165,30 +139,22 @@ testOK('asking for a packageId through workingPackage but not dependency',
 Ct.test("loading a package later should cause it to resolve", function(t,done) {
   t.timeout(1000, done);
   
+  var pkg1, pkg2;
+  
   // first try to find a package that doesn't exist.  This should create
   // a cached action
-  (function(next) {
-    t.loader.canonicalPackageId('bar', '4.1', t.fooPkg, function(err, pkg) {
-      t.equal(err, null, 'error should be null');
-      t.equal(pkg, null, 'pkg should be null too (not found)');
-      next();
-    });
-    
-  // now that we have tried and the package did not load, simulate loading
-  // the package
-  })(function() {
-    // now simulate loading the package...
-    var bar4 = new MockPackage('bar', '4.1.2');
-    t.mockSource.add(bar4);
+  pkg1 = t.loader.canonicalPackageId('bar', '4.1', t.fooPkg);
+  t.equal(pkg1, null, 'pkg should be null too (not found)');
 
-    // try again.
-    t.loader.canonicalPackageId('bar', '4.1', t.fooPkg, function(err, pkg) {
-      t.equal(err, null, 'should not have error');
-      t.equal(pkg, '::bar/4.1.2', 'should find a package');
-      done();
-    });
+  // now simulate loading the package...
+  var bar4 = new MockPackage('bar', '4.1.2');
+  t.mockSource.add(bar4);
 
-  });
+  // try again.
+  pkg2 = t.loader.canonicalPackageId('bar', '4.1', t.fooPkg);
+  t.equal(pkg2, '::bar/4.1.2', 'should find a package');
+  
+  done();
 });
             
 Ct.run();

@@ -40,62 +40,55 @@ Ct.teardown(function(t, done) {
 });
 
 Ct.test('ready() on package not loaded', function(t, done) {
-  t.loader.ready('::imaginary/1.2.1:main', function(err, isReady) {
-    t.equal(err, null, 'should not have error');
-    t.equal(isReady, false, 'isReady');
-    done();
-  });
+  var isReady;
+  isReady = t.loader.ready('::imaginary/1.2.1:main');
+  t.equal(isReady, false, 'isReady');
+  done();
 });
 
 Ct.test('ready() on package with unloaded dependencies', function(t, done) {
-  t.loader.ready('::foo/2.0.0:main', function(err, isReady) {
-    t.equal(err, null, 'should not have error');
-    t.equal(isReady, false, 'isReady (missing bar)');
-    done();
-  });
+  var isReady;
+  isReady = t.loader.ready('::foo/2.0.0:main');
+  t.equal(isReady, false, 'isReady (missing bar)');
+  done();
 });
 
 Ct.test('ready() on package with loaded dependencies', function(t, done) {
+  var isReady;
+  
   t.mockSource.add(t.barPkg);
-  t.loader.ready('::foo/2.0.0:main', function(err, isReady) {
-    t.equal(err, null, 'should not have error');
-    t.equal(isReady, true, 'isReady');
-    done();
-  });
+  isReady = t.loader.ready('::foo/2.0.0:main');
+  t.equal(isReady, true, 'isReady');
+  done();
 });
 
 
 Ct.test('ready() on package with dependencies loading later', function(t, done) {
+  var isReady;
+  
+  isReady = t.loader.ready('::foo/2.0.0:main');
+  t.equal(isReady, false, 'isReady (missing bar)');
 
-  t.loader.ready('::foo/2.0.0:main', function(err, isReady) {
-    t.equal(err, null, 'should not have error');
-    t.equal(isReady, false, 'isReady (missing bar)');
-
-    t.mockSource.add(t.barPkg);
-    t.loader.ready('::foo/2.0.0:main', function(err, isReady) {
-      t.equal(err, null, 'should not have error');
-      t.equal(isReady, true, 'isReady');
-      done();
-    });
-
-  });
-
+  t.mockSource.add(t.barPkg);
+  isReady = t.loader.ready('::foo/2.0.0:main');
+  t.equal(isReady, true, 'isReady');
+  done();
 });
 
 Ct.test('ready() on package with no dependencies', function(t, done) {
-  t.loader.ready('::baz/1.0.0:main', function(err, isReady) {
-    t.equal(err, null, 'should not have error');
-    t.equal(isReady, true, 'isReady');
-    done();
-  });
+  var isReady;
+  
+  isReady = t.loader.ready('::baz/1.0.0:main');
+  t.equal(isReady, true, 'isReady');
+  done();
 });
 
 Ct.test('ready() on loaded package but non-existant module', function(t, done) {
-  t.loader.ready('::baz/1.0.0:imaginary', function(err, isReady) {
-    t.equal(err, null, 'should not have error');
-    t.equal(isReady, false, 'not ready b/c module does not exist');
-    done();
-  });
+  var isReady;
+  
+  isReady = t.loader.ready('::baz/1.0.0:imaginary');
+  t.equal(isReady, false, 'not ready b/c module does not exist');
+  done();
 });
 
 Ct.run();
