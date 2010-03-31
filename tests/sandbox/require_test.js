@@ -20,13 +20,17 @@ Ct.setup(function(t) {
 
   t.bazPkg = new MockPackage('baz', '1.0.0');
   t.bazPkg.mockModules('foo/bar', 'foo', 'foo/baz');
+  
+  // no mocks...
+  t.biffPkg = new MockPackage('biff', '3.1.2');
+  
   // 
   // // don't add to sources just yet - added by one unit test
   // t.barPkg = new MockPackage('bar', '2.1.0');
   // t.barPkg.mockModules('main');
   // 
   t.mockSource = new MockSource();
-  t.mockSource.add(t.fooPkg).add(t.bazPkg);
+  t.mockSource.add(t.fooPkg).add(t.bazPkg).add(t.biffPkg);
 
   t.loader = new tiki.Loader([t.mockSource]);
   t.sandbox = new tiki.Sandbox(t.loader);
@@ -85,6 +89,28 @@ Ct.test('test param normalization', function(t) {
 
   mod2 = t.sandbox.require('./bar', 'foo/baz', t.fooPkg);
   t.strictEqual(mod2, mod1, './bar, foo/bar, fooPkg');
+  
+});
+
+Ct.test('require swaps exports safely', function(t) {
+  
+  var coreFactory = function(require, exports, module) {
+    exports = module.exports = { newExports: true };
+    require('main');
+  };
+  
+  var mainFactory = function(require, exports, module) {
+    var core = require('core');
+    core.secondExports = true;
+  };
+  
+  t.biffPkg.factories = {};
+  t.biffPkg.factories.core = new tiki.Factory('core', t.biffPkg, coreFactory);
+  t.biffPkg.factories.main = new tiki.Factory('main', t.biffPkg, mainFactory);
+  
+  var exp = t.sandbox.require('./core', 'foo', t.biffPkg);
+  t.equal(exp.newExports, true, 'exp.newExports');
+  t.equal(exp.secondExports, true, 'exp.2ndExports');
   
 });
 

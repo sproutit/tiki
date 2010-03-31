@@ -80,8 +80,8 @@ MockPackage.prototype.mockModules = function(moduleId) {
 };
 
 MockPackage.prototype.exists = function(moduleId) {
+  if (tiki.Package.prototype.exists.call(this, moduleId)) return true;
   if (this._mockModules && (this.mods.indexOf(moduleId)>=0)) return true;
-  return tiki.Package.prototype.exists.call(this, moduleId);
 };
 
 MockPackage.prototype.load = function(moduleId) {
