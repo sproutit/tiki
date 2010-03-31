@@ -1,0 +1,13 @@
+{
+	"name": "tiki",
+	"version": "0.9.1",
+	"description": "CommonJS Microkernel for Browser and Command Line",
+	"author": "Charles Jolley <charles@sproutit.com>",
+	
+	"repositories": [
+	  { "type": "git", "url": "git://github.com/sproutit/tiki" }
+	],
+	
+	"dependencies": {}
+	
+}
