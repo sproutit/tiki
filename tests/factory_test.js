@@ -5,7 +5,7 @@
 // ==========================================================================
 /*global process path sys t libDir */
 
-var Factory = require('tiki:tiki').Factory;
+var Factory = require('../tiki').Factory;
 var Ct = require('core_test:sync');
 
 // ..........................................................
