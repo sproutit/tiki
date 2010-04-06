@@ -256,5 +256,18 @@ Ct.test("loading a package later should cause it to find", function(t,done) {
   done();
 });
 
+Ct.test('explicitly named default module', function(t, done) {
+  
+  var mockSource = new MockSource();
+  var loader = new tiki.Loader([t.mockSource]);
+  
+  var defaultPackage = new MockPackage('(default)', '1.0.0');
+  defaultPackage.mockModules('utils', 'fs');
+  loader.defaultPackage = defaultPackage;
+  
+  t.equal(loader.canonical('default:utils'), '::(default)/1.0.0:utils');
+});
+
+
 Ct.run();
 
