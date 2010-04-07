@@ -108,7 +108,7 @@ Ct.test('require swaps exports safely', function(t) {
   t.biffPkg.factories.core = new tiki.Factory('core', t.biffPkg, coreFactory);
   t.biffPkg.factories.main = new tiki.Factory('main', t.biffPkg, mainFactory);
   
-  var exp = t.sandbox.require('./private/core', 'foo', t.biffPkg);
+  var exp = t.sandbox.require('./core', 'foo', t.biffPkg);
   t.equal(exp.newExports, true, 'exp.newExports');
   t.equal(exp.secondExports, true, 'exp.2ndExports');
   

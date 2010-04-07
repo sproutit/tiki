@@ -266,6 +266,7 @@ Ct.test('explicitly named default module', function(t, done) {
   loader.defaultPackage = defaultPackage;
   
   t.equal(loader.canonical('default:utils'), '::(default)/1.0.0:utils');
+  done();
 });
 
 
