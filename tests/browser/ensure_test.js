@@ -4,7 +4,7 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var tiki = require('../tiki'),
+var tiki = require('../../tiki'),
     Ct   = require('core_test');
     
 Ct.module('Browser.ensure');

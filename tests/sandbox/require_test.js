@@ -4,10 +4,10 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var tiki = require('../tiki'),
+var tiki = require('../../tiki'),
     Ct   = require('core_test:sync'),
 
-    mocks = require('..//mocks'),
+    mocks = require('../mocks'),
     MockPackage = mocks.MockPackage, 
     MockSource = mocks.MockSource;
     
