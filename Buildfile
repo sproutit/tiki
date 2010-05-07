@@ -10,7 +10,7 @@
 config :tiki, 
   :required       => [],
   :debug_required => [],
-  :test_dynamic_required => [:core_test],
+  :test_dynamic_required => ['core-test'],
   :use_modules    => true,
   :use_loader     => true,
   :factory_format => :function, # string is not needed here
